@@ -1,4 +1,3 @@
-// src/middleware/auth.middleware.ts
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../types';
 import { verifyToken } from '../utils/auth';
@@ -98,7 +97,6 @@ export const optionalAuth = async (
 
     next();
   } catch (error) {
-    // Continue without authentication
     next();
   }
 };
