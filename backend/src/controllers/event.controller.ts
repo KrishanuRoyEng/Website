@@ -1,4 +1,3 @@
-// src/controllers/event.controller.ts
 import { Request, Response } from 'express';
 import { EventService } from '../services/event.service';
 import { AuthRequest } from '../types';
@@ -152,7 +151,6 @@ export class EventController {
         return res.status(404).json({ error: 'Event not found' });
       }
 
-      // Prepare update data
       const updateData: any = {};
 
       if (req.body.title !== undefined) updateData.title = req.body.title;

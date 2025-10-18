@@ -111,7 +111,6 @@ export class ProjectController {
 
       const member = await MemberService.findByUserId(req.user.id);
 
-      // Check if user owns this project or is admin
       if (project.memberId !== member?.id && req.user.role !== 'ADMIN') {
         return res.status(403).json({ error: 'Not authorized to delete this project' });
       }

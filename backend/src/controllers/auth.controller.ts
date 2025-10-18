@@ -14,17 +14,13 @@ export class AuthController {
         return res.status(400).json({ error: 'Authorization code is required' });
       }
 
-      // Exchange code for access token
       const accessToken = await GitHubService.exchangeCodeForToken(code);
 
-      // Get GitHub user data
       const githubUser = await GitHubService.getGitHubUser(accessToken);
 
-      // Check if user exists
       let user = await UserService.findByGithubId(String(githubUser.id));
 
       if (!user) {
-        // Create new user
         user = await UserService.create({
           githubId: String(githubUser.id),
           username: githubUser.login,
@@ -33,13 +29,11 @@ export class AuthController {
           githubUrl: githubUser.html_url,
         });
 
-        // Create member profile
         await MemberService.create({
           userId: user.id,
           fullName: githubUser.name || undefined,
         });
 
-        // Refresh user with member data
         user = await UserService.findById(user.id);
       }
 
@@ -47,7 +41,6 @@ export class AuthController {
         return res.status(500).json({ error: 'Failed to create user' });
       }
 
-      // Generate JWT token
       const token = generateToken(user.id, user.role);
 
       return res.json({
