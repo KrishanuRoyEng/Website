@@ -1,35 +1,42 @@
 # Coding Club Backend - TypeScript
-Complete TypeScript backend for the Coding Club Portfolio website with PostgreSQL database, GitHub OAuth authentication, and role-based access control.
 
-# Features
+Coding Club Portfolio website with PostgreSQL database, GitHub OAuth authentication, and role-based access control.
 
--✅ GitHub OAuth Authentication (Free)
--✅ PostgreSQL Database with Prisma ORM
--✅ Role-Based Access Control (Admin, Member, Pending)
--✅ RESTful API
--✅ Member Management
--✅ Project Management with Approval System
--✅ Event Management with Featured Events
--✅ Skills & Tags System
--✅ Admin Dashboard Functionality
+## Features
 
-# Tech Stack
+- ✅ GitHub OAuth Authentication (Free)
+- ✅ PostgreSQL Database with Prisma ORM
+- ✅ Role-Based Access Control (Admin, Member, Pending)
+- ✅ RESTful API
+- ✅ Member Management
+- ✅ Project Management with Approval System
+- ✅ Event Management with Featured Events
+- ✅ Skills & Tags System
+- ✅ Admin Dashboard Functionality
 
-## - Runtime: Node.js
-## - Language: TypeScript
-## - Framework: Express.js
-## - Database: PostgreSQL
-## - ORM: Prisma
-## - Authentication: JWT + GitHub OAuth
+## Tech Stack
 
-# Setup Instructions
-## 1. Install Dependencies
-    ```bash
-    npm install
-    ```
-## 2. Environment Variables
-Create a .env file in the root directory:
-envDATABASE_URL="postgresql://username:password@localhost:5432/coding_club_db?schema=public"
+- **Runtime**: Node.js
+- **Language**: TypeScript
+- **Framework**: Express.js
+- **Database**: PostgreSQL
+- **ORM**: Prisma
+- **Authentication**: JWT + GitHub OAuth
+
+## Setup Instructions
+
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Environment Variables
+
+Create a `.env` file in the root directory(or rename `.env.example`):
+
+```env
+DATABASE_URL="postgresql://username:password@localhost:5432/coding_club_db?schema=public"
 PORT=5000
 NODE_ENV=development
 
@@ -41,22 +48,24 @@ GITHUB_CLIENT_SECRET=your-github-client-secret
 GITHUB_REDIRECT_URI=http://localhost:3000/auth/github/callback
 
 FRONTEND_URL=http://localhost:3000
-3. GitHub OAuth Setup (FREE)
+```
 
-Go to GitHub Settings > Developer Settings > OAuth Apps
-Click "New OAuth App"
-Fill in:
+### 3. GitHub OAuth Setup (FREE)
 
-Application name: Your app name
-Homepage URL: http://localhost:3000
-Authorization callback URL: http://localhost:3000/auth/github/callback
+1. Go to GitHub Settings > Developer Settings > OAuth Apps
+2. Click "New OAuth App"
+3. Fill in:
+   - Application name: Your app name
+   - Homepage URL: `http://localhost:3000`
+   - Authorization callback URL: `http://localhost:3000/auth/github/callback`
+4. Copy Client ID and Client Secret to `.env`
 
+**Note**: GitHub OAuth is completely free for both public and private repositories!
 
-Copy Client ID and Client Secret to .env
+### 4. Database Setup
 
-Note: GitHub OAuth is completely free for both public and private repositories!
-4. Database Setup
-bash# Generate Prisma Client
+```bash
+# Generate Prisma Client
 npm run prisma:generate
 
 # Run migrations
@@ -64,128 +73,125 @@ npm run prisma:migrate
 
 # (Optional) Open Prisma Studio to view database
 npm run prisma:studio
-5. Run the Server
-bash# Development
+```
+
+### 5. Run the Server
+
+```bash
+# Development
 npm run dev
 
 # Production
 npm run build
 npm start
-Server will run on http://localhost:5000
-API Endpoints
-Authentication
+```
 
-POST /api/auth/github/callback - GitHub OAuth callback
-GET /api/auth/me - Get current user
-GET /api/auth/github/repos - Fetch user's GitHub repos
+Server will run on `http://localhost:5000`
 
-Members
+## API Endpoints
 
-GET /api/members - Get all members (with filters)
-GET /api/members/leads - Get club leads
-GET /api/members/:id - Get member by ID
-PUT /api/members/profile - Update own profile (Auth)
-POST /api/members/skills - Add skills (Auth)
-DELETE /api/members/skills/:skillId - Remove skill (Auth)
+### Authentication
+- `POST /api/auth/github/callback` - GitHub OAuth callback
+- `GET /api/auth/me` - Get current user
+- `GET /api/auth/github/repos` - Fetch user's GitHub repos
 
-Projects
+### Members
+- `GET /api/members` - Get all members (with filters)
+- `GET /api/members/leads` - Get club leads
+- `GET /api/members/:id` - Get member by ID
+- `PUT /api/members/profile` - Update own profile (Auth)
+- `POST /api/members/skills` - Add skills (Auth)
+- `DELETE /api/members/skills/:skillId` - Remove skill (Auth)
 
-GET /api/projects - Get all projects (with filters)
-GET /api/projects/:id - Get project by ID
-POST /api/projects - Create project (Auth)
-PUT /api/projects/:id - Update project (Auth)
-DELETE /api/projects/:id - Delete project (Auth)
+### Projects
+- `GET /api/projects` - Get all projects (with filters)
+- `GET /api/projects/:id` - Get project by ID
+- `POST /api/projects` - Create project (Auth)
+- `PUT /api/projects/:id` - Update project (Auth)
+- `DELETE /api/projects/:id` - Delete project (Auth)
 
-Skills
+### Skills
+- `GET /api/skills` - Get all skills
+- `POST /api/skills` - Create skill (Admin)
+- `DELETE /api/skills/:id` - Delete skill (Admin)
 
-GET /api/skills - Get all skills
-POST /api/skills - Create skill (Admin)
-DELETE /api/skills/:id - Delete skill (Admin)
+### Tags
+- `GET /api/tags` - Get all tags
+- `POST /api/tags` - Create tag (Admin)
+- `DELETE /api/tags/:id` - Delete tag (Admin)
 
-Tags
+### Events
+- `GET /api/events` - Get all events
+- `GET /api/events/featured` - Get featured events
+- `GET /api/events/upcoming` - Get upcoming events
+- `GET /api/events/:id` - Get event by ID
+- `POST /api/events` - Create event (Auth)
+- `PUT /api/events/:id` - Update event (Admin)
+- `DELETE /api/events/:id` - Delete event (Admin)
 
-GET /api/tags - Get all tags
-POST /api/tags - Create tag (Admin)
-DELETE /api/tags/:id - Delete tag (Admin)
+### Admin
+- `GET /api/admin/members/pending` - Get pending member approvals
+- `PUT /api/admin/members/:userId/approve` - Approve/reject member
+- `GET /api/admin/users` - Get all users
+- `PUT /api/admin/users/:userId/role` - Update user role
+- `GET /api/admin/projects/pending` - Get pending projects
+- `PUT /api/admin/projects/:projectId/approve` - Approve/reject project
+- `DELETE /api/admin/projects/:projectId` - Remove project
+- `PUT /api/admin/events/:eventId/featured` - Set event as featured
 
-Events
+## Database Schema
 
-GET /api/events - Get all events
-GET /api/events/featured - Get featured events
-GET /api/events/upcoming - Get upcoming events
-GET /api/events/:id - Get event by ID
-POST /api/events - Create event (Auth)
-PUT /api/events/:id - Update event (Admin)
-DELETE /api/events/:id - Delete event (Admin)
+### User
+- GitHub authentication
+- Role: ADMIN, MEMBER, PENDING
+- Active status
+- Lead status
 
-Admin
+### Member
+- Profile information
+- Bio, role title, dev stack
+- Skills (many-to-many)
+- Projects (one-to-many)
 
-GET /api/admin/members/pending - Get pending member approvals
-PUT /api/admin/members/:userId/approve - Approve/reject member
-GET /api/admin/users - Get all users
-PUT /api/admin/users/:userId/role - Update user role
-GET /api/admin/projects/pending - Get pending projects
-PUT /api/admin/projects/:projectId/approve - Approve/reject project
-DELETE /api/admin/projects/:projectId - Remove project
-PUT /api/admin/events/:eventId/featured - Set event as featured
+### Project
+- Title, description
+- GitHub/Live URLs
+- Category: WEB, AI, UIUX
+- Approval system
+- Tags (many-to-many)
 
-Database Schema
-User
+### Event
+- Event details
+- Date and location
+- Featured flag
+- Upcoming flag
 
-GitHub authentication
-Role: ADMIN, MEMBER, PENDING
-Active status
-Lead status
+### Skill & Tag
+- Name and category
+- Used for filtering
 
-Member
+## Role-Based Access
 
-Profile information
-Bio, role title, dev stack
-Skills (many-to-many)
-Projects (one-to-many)
+### Public (No Auth)
+- View approved members
+- View approved projects
+- View events
 
-Project
+### Member (Authenticated)
+- Update own profile
+- Create/edit own projects
+- View pending approval status
 
-Title, description
-GitHub/Live URLs
-Category: WEB, AI, UIUX
-Approval system
-Tags (many-to-many)
+### Admin
+- Approve/reject members
+- Approve/reject projects
+- Manage all content
+- Set featured events
+- Manage skills & tags
 
-Event
+## Project Structure
 
-Event details
-Date and location
-Featured flag
-Upcoming flag
-
-Skill & Tag
-
-Name and category
-Used for filtering
-
-Role-Based Access
-Public (No Auth)
-
-View approved members
-View approved projects
-View events
-
-Member (Authenticated)
-
-Update own profile
-Create/edit own projects
-View pending approval status
-
-Admin
-
-Approve/reject members
-Approve/reject projects
-Manage all content
-Set featured events
-Manage skills & tags
-
-Project Structure
+```
 src/
 ├── config/           # Configuration files
 ├── controllers/      # Request handlers
@@ -199,22 +205,24 @@ src/
 
 prisma/
 └── schema.prisma    # Database schema
-Development Notes
+```
 
-First user needs to be manually set as ADMIN in database
-Projects require admin approval by default
-Members are PENDING until approved by admin
-GitHub OAuth automatically creates user + member profile
+## Development Notes
 
-Production Deployment
+- First user needs to be manually set as ADMIN in database
+- Projects require admin approval by default
+- Members are PENDING until approved by admin
+- GitHub OAuth automatically creates user + member profile
 
-Set NODE_ENV=production
-Use strong JWT_SECRET
-Configure production database URL
-Update FRONTEND_URL and GitHub OAuth URLs
-Run migrations: npx prisma migrate deploy
-Build: npm run build
-Start: npm start
+## Production Deployment
 
-License
-MIT
+1. Set `NODE_ENV=production`
+2. Use strong `JWT_SECRET`
+3. Configure production database URL
+4. Update `FRONTEND_URL` and GitHub OAuth URLs
+5. Run migrations: `npx prisma migrate deploy`
+6. Build: `npm run build`
+7. Start: `npm start`
+
+## License
+
