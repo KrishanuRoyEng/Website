@@ -1,0 +1,137 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MEMBER
+  PENDING
+}
+
+enum ProjectCategory {
+  WEB
+  AI
+  UIUX
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  githubId   String   @unique @map("github_id")
+  username   String   @unique
+  email      String?  @unique
+  avatarUrl  String?  @map("avatar_url")
+  githubUrl  String?  @map("github_url")
+  role       UserRole @default(PENDING)
+  isActive   Boolean  @default(false) @map("is_active")
+  isLead     Boolean  @default(false) @map("is_lead")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  member        Member?
+  createdEvents Event[]
+
+  @@map("users")
+}
+
+model Member {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @unique @map("user_id")
+  fullName    String?  @map("full_name")
+  bio         String?  @db.Text
+  roleTitle   String?  @map("role_title")
+  devStack    String?  @map("dev_stack")
+  linkedinUrl String?  @map("linkedin_url")
+  portfolioUrl String? @map("portfolio_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills   MemberSkill[]
+  projects Project[]
+
+  @@map("members")
+}
+
+model Skill {
+  id       Int    @id @default(autoincrement())
+  name     String @unique
+  category String?
+
+  members MemberSkill[]
+
+  @@map("skills")
+}
+
+model MemberSkill {
+  memberId Int @map("member_id")
+  skillId  Int @map("skill_id")
+
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  skill  Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([memberId, skillId])
+  @@map("member_skills")
+}
+
+model Project {
+  id          Int             @id @default(autoincrement())
+  memberId    Int             @map("member_id")
+  title       String
+  description String?         @db.Text
+  githubUrl   String?         @map("github_url")
+  liveUrl     String?         @map("live_url")
+  imageUrl    String?         @map("image_url")
+  category    ProjectCategory?
+  isApproved  Boolean         @default(false) @map("is_approved")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  member Member        @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  tags   ProjectTag[]
+
+  @@map("projects")
+}
+
+model Tag {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  projects ProjectTag[]
+
+  @@map("tags")
+}
+
+model ProjectTag {
+  projectId Int @map("project_id")
+  tagId     Int @map("tag_id")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tag     Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, tagId])
+  @@map("project_tags")
+}
+
+model Event {
+  id              Int      @id @default(autoincrement())
+  title           String
+  description     String?  @db.Text
+  eventDate       DateTime @map("event_date")
+  location        String?
+  imageUrl        String?  @map("image_url")
+  registrationUrl String?  @map("registration_url")
+  isFeatured      Boolean  @default(false) @map("is_featured")
+  isUpcoming      Boolean  @default(true) @map("is_upcoming")
+  createdBy       Int?     @map("created_by")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  creator User? @relation(fields: [createdBy], references: [id])
+
+  @@map("events")
+}
