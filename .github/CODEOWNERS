@@ -1,0 +1,12 @@
+# Global owner for the entire repo
+*       @KrishanuRoyEng
+
+# Specific directory ownership
+/frontend/   @frontend-team
+/backend/    @backend-team @KrishanuRoyEng
+
+# Individual file ownership
+package.json @devops-lead
+
+# Multiple owners per path
+/api/   @KrishanuRoyEng @ReviewTeam
