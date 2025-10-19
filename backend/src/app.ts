@@ -8,8 +8,10 @@ import { config } from './config';
 const app: Application = express();
 
 app.use(cors({
-  origin: config.frontend.url,
+  origin: [config.frontend.url, 'http://localhost:3000', 'http://127.0.0.1:3000'],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
