@@ -25,20 +25,45 @@ export class MemberController {
     }
   }
 
-  static async getById(req: Request, res: Response) {
+  static async getByUserId(req: Request, res: Response) {
     try {
-      const id = parseInt(req.params.id);
-      const member = await MemberService.findById(id);
+      const userId = parseInt(req.params.userId);
+      const member = await MemberService.findByUserId(userId);
 
       if (!member) {
         return res.status(404).json({ error: 'Member not found' });
       }
 
-      return res.json(member);
+      const memberWithProjects = await MemberService.findById(member.id);
+
+      return res.json(memberWithProjects);
     } catch (error) {
       return res.status(500).json({ error: 'Failed to fetch member' });
     }
   }
+
+static async getAuthenticatedProfile(req: AuthRequest, res: Response) {
+  try {     
+      if (!req.user || !req.user.id) {
+          return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const userId = req.user.id;
+      const member = await MemberService.findByUserId(userId);
+
+      if (!member) {
+          return res.status(404).json({ error: 'Member profile not found' });
+      }
+      const memberWithProjects = await MemberService.findById(member.id);
+      if (!memberWithProjects) {
+           return res.status(404).json({ error: 'Member profile data incomplete' });
+      }
+      return res.json(memberWithProjects);
+  } catch (error) {
+      console.error('CRITICAL 500 ERROR in getAuthenticatedProfile:', error);
+      return res.status(500).json({ error: 'Failed to fetch members' });
+  }
+}
 
   static async getLeads(req: Request, res: Response) {
     try {

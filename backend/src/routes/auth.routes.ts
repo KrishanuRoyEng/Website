@@ -5,6 +5,7 @@ import { authenticate } from '../middlewares/auth.middleware';
 const router = Router();
 
 router.post('/github/callback', AuthController.githubCallback);
+router.post('/github', AuthController.githubSignIn);
 router.get('/me', authenticate, AuthController.getMe);
 router.get('/github/repos', authenticate, AuthController.fetchGithubRepos);
 

@@ -48,19 +48,19 @@ export default function AdminDashboard() {
     loadData();
   }, [session, status, isAdmin, router]);
 
-  const approveMember = async (memberId: number) => {
+  const approveMember = async (userId: number) => {
     try {
-      await adminApi.approveMember(memberId, { isActive: true, role: 'MEMBER' });
-      setPendingMembers(pendingMembers.filter((m) => m.id !== memberId));
+      await adminApi.approveMember(userId, { isActive: true, role: 'MEMBER' });
+      setPendingMembers(pendingMembers.filter((m) => m.id !== userId));
     } catch (error) {
       console.error('Error approving member:', error);
     }
   };
 
-  const rejectMember = async (memberId: number) => {
+  const rejectMember = async (userId: number) => {
     try {
-      await adminApi.approveMember(memberId, { isActive: false, role: 'PENDING' });
-      setPendingMembers(pendingMembers.filter((m) => m.id !== memberId));
+      await adminApi.approveMember(userId, { isActive: false, role: 'PENDING' });
+      setPendingMembers(pendingMembers.filter((m) => m.id !== userId));
     } catch (error) {
       console.error('Error rejecting member:', error);
     }
@@ -159,14 +159,14 @@ export default function AdminDashboard() {
                     </div>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => approveMember(member.id)}
+                        onClick={() => approveMember(member.user.id)}
                         className="p-2 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 transition-colors"
                         title="Approve"
                       >
                         <CheckCircle size={18} />
                       </button>
                       <button
-                        onClick={() => rejectMember(member.id)}
+                        onClick={() => rejectMember(member.user.id)}
                         className="p-2 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 transition-colors"
                         title="Reject"
                       >

@@ -54,7 +54,7 @@ export default function Navbar() {
             {session ? (
               <div className="flex items-center gap-4">
                 <Link
-                  href={`/profile/${(session.user as any)?.id}`}
+                  href={`/members/profile`}
                   className="flex items-center gap-2 text-slate-300 hover:text-primary transition-colors"
                 >
                   <img
@@ -64,13 +64,15 @@ export default function Navbar() {
                   />
                   {session.user?.name}
                 </Link>
-                <button
-                  onClick={() => signOut()}
-                  className="btn-secondary flex items-center gap-2"
-                >
-                  <LogOut size={16} />
-                  Sign Out
-                </button>
+                <Link href={`/members`}>
+                  <button
+                    onClick={() => signOut()}
+                    className="btn-secondary flex items-center gap-2"
+                  >
+                    <LogOut size={16} />
+                    Sign Out
+                  </button>
+                </Link>
               </div>
             ) : (
               <button
