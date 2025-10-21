@@ -9,8 +9,8 @@ import Link from 'next/link';
 
 export default function EditProfilePage() {
   const router = useRouter();
-  const { id } = router.query;
   const { data: session } = useSession();
+  const currentUserId = (session?.user as any)?.id;
   const [member, setMember] = useState<Member | null>(null);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,11 +41,11 @@ export default function EditProfilePage() {
   const [creatingProject, setCreatingProject] = useState(false);
 
   useEffect(() => {
-    if (!id || !session) return;
+    if (!currentUserId || !session) return;
 
     const loadData = async () => {
       try {
-        const memberRes = await memberApi.getByUserId(Number(id));
+        const memberRes = await memberApi.getByUserId(Number(currentUserId));
         const skillsRes = await skillApi.getAll();
 
         setMember(memberRes.data);
@@ -69,7 +69,7 @@ export default function EditProfilePage() {
     };
 
     loadData();
-  }, [id, session]);
+  }, [currentUserId, session]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -112,7 +112,7 @@ export default function EditProfilePage() {
 
       setSuccess('Profile updated successfully!');
       setTimeout(() => {
-        router.push(`/profile/${id}`);
+        router.push(`/members/profile`);
       }, 1500);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to save profile');
@@ -174,13 +174,13 @@ export default function EditProfilePage() {
     );
   }
 
-  if (!member || (session && (session.user as any).id !== Number(id))) {
+  if (!member || (session && (session.user as any).id !== Number(currentUserId))) {
     return (
       <Layout>
         <div className="container-custom py-20 text-center">
           <p className="text-red-400">You are not authorized to edit this profile</p>
           <button
-            onClick={() => router.push(`/profile/${id}`)}
+            onClick={() => router.push(`/members/profile`)}
             className="btn-primary mt-6"
           >
             Go Back
@@ -194,7 +194,7 @@ export default function EditProfilePage() {
     <Layout>
       <div className="container-custom py-12">
         <div className="mb-8">
-          <Link href={`/profile/${id}`} className="text-primary hover:text-primary/80">
+          <Link href={`/members/profile`} className="text-primary hover:text-primary/80">
             ← Back to Profile
           </Link>
         </div>

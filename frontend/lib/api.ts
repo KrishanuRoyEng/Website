@@ -82,8 +82,8 @@ export const authApi = {
 };
 
 export const adminApi = {
-  approveMember: (id: number, data: any) => apiClient.put(`/admin/members/${id}/approval`, data),
-  approveProject: (id: number, data: any) => apiClient.put(`/admin/projects/${id}/approval`, data),
+  approveMember: (id: number, data: any) => apiClient.put(`/admin/members/${id}/approve`, data),
+  approveProject: (id: number, data: any) => apiClient.put(`/admin/projects/${id}/approve`, data),
   featuredEvent: (id: number, data: any) => apiClient.put(`/admin/events/${id}/featured`, data),
 };
 

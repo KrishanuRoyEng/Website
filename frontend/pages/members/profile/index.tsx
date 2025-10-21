@@ -101,7 +101,7 @@ export default function ProfilePage() {
                 </h1>
                 {isOwnProfile && (
                   <Link
-                    href={`/profile/edit`}
+                    href={`profile/edit`}
                     className="btn-secondary flex items-center gap-2"
                   >
                     <Edit2 size={18} />
