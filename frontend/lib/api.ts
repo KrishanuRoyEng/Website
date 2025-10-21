@@ -42,10 +42,14 @@ apiClient.interceptors.response.use(
 
 export const memberApi = {
   getAll: (params?: any) => apiClient.get('/members', { params }),
-  getById: (id: number) => apiClient.get(`/members/${id}`),
+  getByUserId: (userId: number) => apiClient.get(`/members/user/${userId}`),
+  getProfile: () => apiClient.get('/members/profile'),
   getProjects: (memberId: number) => apiClient.get(`/members/${memberId}/projects`),
   getSkills: (memberId: number) => apiClient.get(`/members/${memberId}/skills`),
   update: (id: number, data: any) => apiClient.put(`/members/${id}`, data),
+  updateProfile: (data: any) => apiClient.put('/members/profile', data),
+  addSkills: (data: any) => apiClient.post('/members/skills', data),
+  removeSkill: (skillId: number) => apiClient.delete(`/members/skills/${skillId}`),
 };
 
 export const projectApi = {

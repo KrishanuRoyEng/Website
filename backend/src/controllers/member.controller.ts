@@ -25,20 +25,62 @@ export class MemberController {
     }
   }
 
-  static async getById(req: Request, res: Response) {
+  static async getByUserId(req: Request, res: Response) {
     try {
-      const id = parseInt(req.params.id);
-      const member = await MemberService.findById(id);
+      const userId = parseInt(req.params.userId);
+      const member = await MemberService.findByUserId(userId);
 
       if (!member) {
         return res.status(404).json({ error: 'Member not found' });
       }
 
-      return res.json(member);
+      const memberWithProjects = await MemberService.findById(member.id);
+
+      return res.json(memberWithProjects);
     } catch (error) {
       return res.status(500).json({ error: 'Failed to fetch member' });
     }
   }
+
+static async getAuthenticatedProfile(req: AuthRequest, res: Response) {
+  try {
+      console.log('=== getAuthenticatedProfile called ===');
+      console.log('req.user:', req.user);
+      
+      if (!req.user || !req.user.id) {
+          console.log('❌ No user in request');
+          return res.status(401).json({ error: 'Not authenticated' });
+      }
+
+      const userId = req.user.id;
+      console.log('✅ User ID:', userId);
+      
+      // 1. Find the Member record using the authenticated User ID
+      const member = await MemberService.findByUserId(userId);
+      console.log('Member found:', member);
+
+      if (!member) {
+          console.log('❌ No member profile for user:', userId);
+          return res.status(404).json({ error: 'Member profile not found' });
+      }
+
+      console.log('✅ Member ID:', member.id);
+      
+      // 2. Get the full member details (including projects/skills)
+      const memberWithProjects = await MemberService.findById(member.id);
+      console.log('Member with projects:', memberWithProjects ? 'Found' : 'Not found');
+
+      if (!memberWithProjects) {
+           return res.status(404).json({ error: 'Member profile data incomplete' });
+      }
+
+      console.log('✅ Sending member profile');
+      return res.json(memberWithProjects);
+  } catch (error) {
+      console.error('CRITICAL 500 ERROR in getAuthenticatedProfile:', error);
+      return res.status(500).json({ error: 'Failed to fetch members' });
+  }
+}
 
   static async getLeads(req: Request, res: Response) {
     try {

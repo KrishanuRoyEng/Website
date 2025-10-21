@@ -8,7 +8,7 @@ interface MemberCardProps {
 
 export default function MemberCard({ member }: MemberCardProps) {
   return (
-    <Link href={`/members/${member.id}`}>
+    <Link href={`/members/user/${member.id}`}>
       <div className="card-hover cursor-pointer group overflow-hidden">
         <div className="p-6">
           {/* Header with Avatar */}

@@ -6,6 +6,56 @@ import { generateToken } from '../utils/auth';
 import { AuthRequest } from '../types';
 
 export class AuthController {
+  static async githubSignIn(req: Request, res: Response) {
+    try {
+      const { githubId, username, email, avatarUrl, githubUrl } = req.body;
+
+      if (!githubId || !username) {
+        return res.status(400).json({ error: 'GitHub ID and username are required' });
+      }
+
+      let user = await UserService.findByGithubId(String(githubId));
+
+      if (!user) {
+        user = await UserService.create({
+          githubId: String(githubId),
+          username,
+          email: email || undefined,
+          avatarUrl: avatarUrl || undefined,
+          githubUrl: githubUrl || undefined,
+        });
+
+        // Create member profile
+        await MemberService.create({
+          userId: user.id,
+          fullName: username,
+        });
+
+        user = await UserService.findById(user.id);
+      }
+
+      if (!user) {
+        return res.status(500).json({ error: 'Failed to create user' });
+      }
+
+      const token = generateToken(user.id, user.role);
+
+      return res.json({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        avatarUrl: user.avatarUrl,
+        role: user.role,
+        isActive: user.isActive,
+        isLead: user.isLead,
+        token,
+      });
+    } catch (error) {
+      console.error('GitHub sign-in error:', error);
+      return res.status(500).json({ error: 'Sign-in failed' });
+    }
+  }
+
   static async githubCallback(req: Request, res: Response) {
     try {
       const { code } = req.body;

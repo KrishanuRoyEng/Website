@@ -54,7 +54,7 @@ export default function Navbar() {
             {session ? (
               <div className="flex items-center gap-4">
                 <Link
-                  href={`/profile/${(session.user as any)?.id}`}
+                  href={`members/profile`}
                   className="flex items-center gap-2 text-slate-300 hover:text-primary transition-colors"
                 >
                   <img

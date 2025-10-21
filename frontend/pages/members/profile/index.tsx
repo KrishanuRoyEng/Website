@@ -10,33 +10,44 @@ import Link from 'next/link';
 
 export default function ProfilePage() {
   const router = useRouter();
-  const { id } = router.query;
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [member, setMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const isOwnProfile = member && session && (session.user as any).id === member.userId;
+  const currentUserId = (session?.user as any)?.id;
+
+  const isOwnProfile = status === 'authenticated'; 
   const isMember = session && (session.user as any).role !== 'PENDING';
 
   useEffect(() => {
-    if (!id) return;
+    if (status !== 'authenticated' || !currentUserId) {
+      if (status !== 'loading') {
+        setLoading(false);
+      }
+      return; 
+    }
 
     const loadMember = async () => {
       try {
-        const res = await memberApi.getById(Number(id));
+        console.log('Session:', session);
+        console.log('Access token:', (session as any)?.accessToken);
+        const res = await memberApi.getProfile();
+        console.log('Member loaded:', res.data);
         setMember(res.data);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error loading member:', error);
+        setError(error.response?.data?.error || error.message || 'Failed to load profile');
       } finally {
         setLoading(false);
       }
     };
 
     loadMember();
-  }, [id]);
+  }, [ status]);
 
-  if (loading) {
+  if (loading || status === 'loading') {
     return (
       <Layout>
         <div className="container-custom py-20 text-center">
@@ -46,15 +57,27 @@ export default function ProfilePage() {
     );
   }
 
-  if (!member) {
+  if (error || (!member && status === 'authenticated')) {
     return (
       <Layout>
         <div className="container-custom py-20 text-center">
           <p className="text-slate-400">Profile not found</p>
+          {error && (
+            <p className="text-red-400 text-sm mt-2">Error: {error}</p>
+          )}
+          <p className="text-slate-500 text-xs mt-2">Session ID: {(session?.user as any)?.id}</p>
+          <button
+            onClick={() => router.push('/members')}
+            className="btn-primary mt-6"
+          >
+            View All Members
+          </button>
         </div>
       </Layout>
     );
   }
+
+  if (!member) return null;
 
   return (
     <Layout>
@@ -78,7 +101,7 @@ export default function ProfilePage() {
                 </h1>
                 {isOwnProfile && (
                   <Link
-                    href={`/profile/${member.id}/edit`}
+                    href={`/profile/edit`}
                     className="btn-secondary flex items-center gap-2"
                   >
                     <Edit2 size={18} />
