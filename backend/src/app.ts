@@ -26,14 +26,18 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     const duration = Date.now() - startTime;
     const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
 
-    logger.info(`${req.method} ${req.originalUrl} ${res.statusCode}`, {
-      method: req.method,
-      path: req.originalUrl,
-      statusCode: res.statusCode,
-      duration: `${duration}ms`,
-      ip: clientIp,
-      userAgent: req.get('user-agent'),
-    });
+    try {
+      logger.info(`${req.method} ${req.originalUrl} ${res.statusCode}`, {
+        method: req.method,
+        path: req.originalUrl,
+        statusCode: res.statusCode,
+        duration: `${duration}ms`,
+        ip: clientIp,
+        userAgent: req.get('user-agent'),
+      });
+    } catch (error) {
+      console.error('Logging error:', error);
+    }
   });
 
   next();
