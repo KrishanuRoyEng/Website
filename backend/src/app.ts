@@ -5,7 +5,6 @@ import routes from './routes';
 import { errorHandler, notFound } from './middlewares/error.middleware';
 import { config } from './config';
 import logger from './utils/logger';
-import { globalRateLimiter } from './middlewares/rateLimit.middleware';
 
 const app: Application = express();
 
