@@ -4,8 +4,12 @@ import fs from 'fs';
 
 const logsDir = path.join(process.cwd(), 'logs');
 
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
+try {
+  if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+  }
+} catch (error) {
+  console.error('Failed to create logs directory:', error);
 }
 
 const logLevels = {
