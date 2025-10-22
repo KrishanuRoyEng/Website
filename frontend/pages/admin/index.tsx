@@ -1,3 +1,4 @@
+
 import Layout from '@/components/Layout';
 import { useSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
@@ -12,6 +13,9 @@ export default function AdminDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>('members');
+  
+  // Debug state
+  const [debugInfo, setDebugInfo] = useState<any>(null);
   
   // Data states
   const [pendingMembers, setPendingMembers] = useState<any[]>([]);
@@ -42,6 +46,26 @@ export default function AdminDashboard() {
     imageUrl: '',
   });
 
+  // Add debug logging
+  useEffect(() => {
+    if (session) {
+      console.log('Session data:', session);
+      console.log('Session user:', session.user);
+      console.log('User role:', (session.user as any)?.role);
+      console.log('Access token exists:', !!(session as any)?.accessToken);
+      
+      setDebugInfo({
+        hasSession: !!session,
+        hasUser: !!session.user,
+        userEmail: session.user?.email,
+        userRole: (session.user as any)?.role,
+        hasAccessToken: !!(session as any)?.accessToken,
+        sessionKeys: Object.keys(session),
+        userKeys: session.user ? Object.keys(session.user) : [],
+      });
+    }
+  }, [session]);
+
   const isAdmin = session && (session.user as any)?.role === 'ADMIN';
 
   useEffect(() => {
@@ -50,12 +74,16 @@ export default function AdminDashboard() {
       return;
     }
 
-    if (!isAdmin) {
-      router.push('/');
+    if (status === 'authenticated' && !isAdmin) {
+      console.log('Not admin, redirecting. Role:', (session?.user as any)?.role);
+      // Don't redirect immediately, let user see debug info
+      // router.push('/');
       return;
     }
 
-    loadData();
+    if (isAdmin) {
+      loadData();
+    }
   }, [session, status, isAdmin, router, activeTab]);
 
   const loadData = async () => {
@@ -89,7 +117,8 @@ export default function AdminDashboard() {
       }
     } catch (error: any) {
       console.error('Error loading admin data:', error);
-      setError('Failed to load data');
+      console.error('Error response:', error.response?.data);
+      setError(error.response?.data?.error || 'Failed to load data');
     } finally {
       setLoading(false);
     }
@@ -252,21 +281,72 @@ export default function AdminDashboard() {
     }
   };
 
-  if (status === 'loading' || loading) {
+  if (status === 'loading') {
     return (
       <Layout>
         <div className="container-custom py-20 text-center">
-          <p className="text-slate-400">Loading...</p>
+          <p className="text-slate-400">Loading session...</p>
         </div>
       </Layout>
     );
   }
 
+  // Show debug info if not admin
   if (!isAdmin) {
     return (
       <Layout>
+        <div className="container-custom py-20">
+          <div className="max-w-2xl mx-auto">
+            <h1 className="text-3xl font-bold text-white mb-8">Admin Access Debug Info</h1>
+            
+            <div className="card p-6 mb-6">
+              <h2 className="text-xl font-semibold text-white mb-4">Session Status</h2>
+              <div className="space-y-2 text-sm">
+                <p className="text-slate-300">
+                  <span className="font-medium">Auth Status:</span> {status}
+                </p>
+                <p className="text-slate-300">
+                  <span className="font-medium">Is Admin:</span> {isAdmin ? 'Yes' : 'No'}
+                </p>
+              </div>
+            </div>
+
+            {debugInfo && (
+              <div className="card p-6">
+                <h2 className="text-xl font-semibold text-white mb-4">Debug Information</h2>
+                <pre className="bg-slate-900 p-4 rounded text-xs text-slate-300 overflow-auto">
+                  {JSON.stringify(debugInfo, null, 2)}
+                </pre>
+              </div>
+            )}
+
+            <div className="mt-6 p-4 bg-yellow-900/30 border border-yellow-500 rounded text-yellow-300 text-sm">
+              <p className="font-semibold mb-2">If you should have admin access:</p>
+              <ol className="list-decimal list-inside space-y-1">
+                <li>Check your database - verify your user has role='ADMIN'</li>
+                <li>Check NextAuth configuration - ensure role is added to session</li>
+                <li>Sign out and sign back in to refresh your session</li>
+                <li>Check browser console for additional errors</li>
+              </ol>
+            </div>
+
+            <button
+              onClick={() => signIn()}
+              className="btn-primary w-full mt-6"
+            >
+              Sign Out and Sign Back In
+            </button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Layout>
         <div className="container-custom py-20 text-center">
-          <p className="text-slate-400">Access denied. Admin access required.</p>
+          <p className="text-slate-400">Loading admin data...</p>
         </div>
       </Layout>
     );
