@@ -114,7 +114,7 @@ export default function EditProfilePage() {
 
       setSuccess('✨ Profile updated successfully!');
       setTimeout(() => {
-        router.push(`/profile`);
+        router.push(`/members/profile`);
       }, 1500);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to save profile');
@@ -195,7 +195,7 @@ export default function EditProfilePage() {
         <div className="container-custom py-20 text-center">
           <p className="text-red-400 mb-4">⚠️ You are not authorized to edit this profile</p>
           <button
-            onClick={() => router.push(`/profile`)}
+            onClick={() => router.push(`/members/profile`)}
             className="btn-primary"
           >
             Go Back
