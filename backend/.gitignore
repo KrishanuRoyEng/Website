@@ -27,8 +27,5 @@ Thumbs.db
 *.swp
 *.swo
 
-# Prisma
-prisma/migrations/
-
 # Testing
 coverage/
