@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import logger from '../utils/logger';
 
 export const errorHandler = (
   err: Error,
@@ -6,8 +7,16 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  console.error('Error:', err);
+  const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
 
+  logger.error('Unhandled error occurred', {
+    message: err.message,
+    stack: err.stack,
+    method: req.method,
+    path: req.originalUrl,
+    ip: clientIp,
+    ...(process.env.NODE_ENV === 'development' && { fullError: err }),
+  });
   if (res.headersSent) {
     return next(err);
   }
