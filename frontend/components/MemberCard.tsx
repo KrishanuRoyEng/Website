@@ -53,12 +53,12 @@ export default function MemberCard({ member }: MemberCardProps) {
             <div className="mb-4">
               <p className="text-xs text-slate-400 mb-2">Skills ({member.skills.length})</p>
               <div className="flex flex-wrap gap-2">
-                {member.skills.slice(0, 4).map((skill) => (
+                {member.skills.slice(0, 4).map((memberSkill) => (
                   <span
-                    key={skill.id}
+                    key={memberSkill.skill.id}
                     className="badge-secondary text-xs"
                   >
-                    {skill.name}
+                    {memberSkill.skill.name}
                   </span>
                 ))}
                 {member.skills.length > 4 && (

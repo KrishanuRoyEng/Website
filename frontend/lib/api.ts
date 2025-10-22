@@ -71,10 +71,15 @@ export const eventApi = {
 export const skillApi = {
   getAll: () => apiClient.get('/skills'),
   getById: (id: number) => apiClient.get(`/skills/${id}`),
+  create: (data: any) => apiClient.post('/skills', data),
+  update: (id: number, data: any) => apiClient.put(`/skills/${id}`, data),
+  delete: (id: number) => apiClient.delete(`/skills/${id}`),
 };
 
 export const tagApi = {
   getAll: () => apiClient.get('/tags'),
+  create: (data: any) => apiClient.post('/tags', data),
+  delete: (id: number) => apiClient.delete(`/tags/${id}`),
 };
 
 export const authApi = {
@@ -82,9 +87,19 @@ export const authApi = {
 };
 
 export const adminApi = {
-  approveMember: (id: number, data: any) => apiClient.put(`/admin/members/${id}/approve`, data),
-  approveProject: (id: number, data: any) => apiClient.put(`/admin/projects/${id}/approve`, data),
-  featuredEvent: (id: number, data: any) => apiClient.put(`/admin/events/${id}/featured`, data),
+  // Member management
+  getPendingMembers: () => apiClient.get('/admin/members/pending'),
+  getAllUsers: (params?: any) => apiClient.get('/admin/users', { params }),
+  approveMember: (userId: number, data: any) => apiClient.put(`/admin/members/${userId}/approve`, data),
+  updateUserRole: (userId: number, data: any) => apiClient.put(`/admin/users/${userId}/role`, data),
+  
+  // Project management
+  getPendingProjects: () => apiClient.get('/admin/projects/pending'),
+  approveProject: (projectId: number, data: any) => apiClient.put(`/admin/projects/${projectId}/approve`, data),
+  deleteProject: (projectId: number) => apiClient.delete(`/admin/projects/${projectId}`),
+  
+  // Event management
+  setEventFeatured: (eventId: number, data: any) => apiClient.put(`/admin/events/${eventId}/featured`, data),
 };
 
 export default apiClient;

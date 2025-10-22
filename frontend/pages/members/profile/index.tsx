@@ -31,10 +31,7 @@ export default function ProfilePage() {
 
     const loadMember = async () => {
       try {
-        console.log('Session:', session);
-        console.log('Access token:', (session as any)?.accessToken);
         const res = await memberApi.getProfile();
-        console.log('Member loaded:', res.data);
         setMember(res.data);
       } catch (error: any) {
         console.error('Error loading member:', error);
@@ -141,9 +138,9 @@ export default function ProfilePage() {
                 <div className="mb-6">
                   <h3 className="text-sm font-semibold text-slate-300 mb-2">Skills</h3>
                   <div className="flex flex-wrap gap-2">
-                    {member.skills.map((skill) => (
-                      <span key={skill.id} className="badge-secondary">
-                        {skill.name}
+                    {member.skills.map((memberSkill) => (
+                      <span key={memberSkill.skill.id} className="badge-secondary">
+                        {memberSkill.skill.name}
                       </span>
                     ))}
                   </div>
