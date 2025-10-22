@@ -12,26 +12,6 @@ try {
   console.error('Failed to create logs directory:', error);
 }
 
-const logLevels = {
-  fatal: 0,
-  error: 1,
-  warn: 2,
-  info: 3,
-  debug: 4,
-  trace: 5,
-};
-
-const colors = {
-  fatal: 'red',
-  error: 'red',
-  warn: 'yellow',
-  info: 'green',
-  debug: 'blue',
-  trace: 'gray',
-};
-
-winston.addColors(colors);
-
 const format = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.errors({ stack: true }),
@@ -39,32 +19,44 @@ const format = winston.format.combine(
   winston.format.json()
 );
 
-const transports = [
-  new winston.transports.Console({
-    format: winston.format.combine(
-      winston.format.colorize(),
-      winston.format.printf(({ timestamp, level, message, ...meta }) => {
-        const metaStr = Object.keys(meta).length ? JSON.stringify(meta, null, 2) : '';
-        return `${timestamp} [${level}]: ${message} ${metaStr}`;
-      })
-    ),
-  }),
-  new winston.transports.File({
-    filename: path.join(logsDir, 'error.log'),
-    level: 'error',
-    format: format,
-  }),
-  new winston.transports.File({
-    filename: path.join(logsDir, 'combined.log'),
-    format: format,
-  }),
-];
+const consoleTransport = new winston.transports.Console({
+  format: winston.format.combine(
+    winston.format.colorize(),
+    winston.format.printf(({ timestamp, level, message, ...meta }) => {
+      const metaStr = Object.keys(meta).length ? JSON.stringify(meta, null, 2) : '';
+      return `${timestamp} [${level}]: ${message} ${metaStr}`;
+    })
+  ),
+});
+
+const fileTransports: any[] = [];
+
+try {
+  fileTransports.push(
+    new winston.transports.File({
+      filename: path.join(logsDir, 'error.log'),
+      level: 'error',
+      format: format,
+    })
+  );
+
+  fileTransports.push(
+    new winston.transports.File({
+      filename: path.join(logsDir, 'combined.log'),
+      format: format,
+    })
+  );
+} catch (error) {
+  console.error('Failed to create file transports:', error);
+}
 
 const logger = winston.createLogger({
-  levels: logLevels,
+  level: 'info',
   format: format,
   defaultMeta: { service: 'coding-club-api' },
-  transports: transports,
+  transports: [consoleTransport, ...fileTransports],
+  exceptionHandlers: [consoleTransport],
+  rejectionHandlers: [consoleTransport],
 });
 
 export default logger;
