@@ -36,7 +36,7 @@ export default function MembersPage() {
     ? members
     : members.filter((member) =>
         selectedSkills.every((skillId) =>
-          member.skills.some((s) => s.id === skillId)
+          member.skills.some((memberSkill) => memberSkill.skill.id === skillId)
         )
       );
 
