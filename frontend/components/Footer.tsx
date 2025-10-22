@@ -43,26 +43,26 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-primary transition-colors">
-                  Blog
-                </a>
+                <Link href="https://svist.org" className="hover:text-primary transition-colors">
+                  College Main
+                </Link>
               </li>
               <li>
-                <a href="#" className="hover:text-primary transition-colors">
+                <Link href="/contacts" className="hover:text-primary transition-colors">
                   Contact
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
           <div>
             <h4 className="font-semibold text-white mb-4">Social</h4>
             <div className="flex gap-4">
-              <a
-                href="#"
+              <Link
+                href="https://github.com/Coding-Club-SVIST"
                 className="text-slate-400 hover:text-primary transition-colors"
               >
                 <Github size={20} />
-              </a>
+              </Link>
               <a
                 href="#"
                 className="text-slate-400 hover:text-primary transition-colors"

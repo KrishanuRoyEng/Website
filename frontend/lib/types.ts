@@ -25,7 +25,7 @@ export interface Member {
   linkedinUrl?: string;
   portfolioUrl?: string;
   user: User;
-  skills: Skill[];
+  skills: MemberSkill[];
   projects: Project[];
   createdAt: string;
   updatedAt: string;
