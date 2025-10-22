@@ -47,6 +47,15 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+try {
+  const { globalRateLimiter } = require('./middlewares/rateLimit.middleware');
+  if (globalRateLimiter) {
+    app.use(globalRateLimiter);
+  }
+} catch (error) {
+  console.error('Error loading rate limiter:', error);
+}
+
 app.use('/api', routes);
 
 app.use(errorHandler);
