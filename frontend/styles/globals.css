@@ -20,6 +20,32 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  
+  /* --- Firefox Scrollbar Support (Limited styling) --- */
+  scrollbar-color: #4b5563 #1e293b; /* thumb color | track color */
+  scrollbar-width: thin; /* 'auto' or 'thin' */
+}
+
+/* ------------------------------------- */
+/* Custom WebKit Scrollbar Styling (Chrome, Safari, Edge) */
+/* ------------------------------------- */
+
+/* Applies to the whole scrollbar (track and thumb) */
+body::-webkit-scrollbar {
+  width: 8px; /* Width of the entire scrollbar */
+  background-color: transparent;
+}
+
+/* Defines the color and shape of the thumb (the moving handle) */
+body::-webkit-scrollbar-thumb {
+  background-color: #4b5563; /* Slate-600 for the thumb */
+  border-radius: 10px; /* Rounded ends */
+  border: 2px solid #0f172a; /* Inner border for spacing (matches body BG) */
+}
+
+/* Optional: Style the track (the area the thumb moves along) */
+body::-webkit-scrollbar-track {
+  background: #1e293b; /* Slate-800 for the track */
 }
 
 @layer components {

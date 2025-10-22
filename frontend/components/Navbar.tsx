@@ -8,44 +8,29 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
   const isAdmin = (session?.user as any)?.role === 'ADMIN';
+  const handleSignOut = () => {
+    signOut({ callbackUrl: '/' }); 
+  };
 
   return (
     <nav className="bg-slate-900/50 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
       <div className="container-custom">
         <div className="flex justify-between items-center py-4">
+          {/* ... Logo Link ... */}
           <Link href="/" className="text-2xl font-bold">
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               CodeClub
             </span>
           </Link>
 
-          {/* Desktop Menu */}
+          {/* ... Desktop Menu Links ... */}
           <div className="hidden md:flex items-center gap-8">
-            <Link
-              href="/members"
-              className="text-slate-300 hover:text-primary transition-colors"
-            >
-              Members
-            </Link>
-            <Link
-              href="/projects"
-              className="text-slate-300 hover:text-primary transition-colors"
-            >
-              Projects
-            </Link>
-            <Link
-              href="/events"
-              className="text-slate-300 hover:text-primary transition-colors"
-            >
-              Events
-            </Link>
+            {/* ... Menu Links ... */}
+            <Link href="/members" className="text-slate-300 hover:text-primary transition-colors">Members</Link>
+            <Link href="/projects" className="text-slate-300 hover:text-primary transition-colors">Projects</Link>
+            <Link href="/events" className="text-slate-300 hover:text-primary transition-colors">Events</Link>
             {isAdmin && (
-              <Link
-                href="/admin"
-                className="text-slate-300 hover:text-accent transition-colors"
-              >
-                Admin
-              </Link>
+              <Link href="/admin" className="text-slate-300 hover:text-accent transition-colors">Admin</Link>
             )}
           </div>
 
@@ -64,15 +49,13 @@ export default function Navbar() {
                   />
                   {session.user?.name}
                 </Link>
-                <Link href={`/members`}>
-                  <button
-                    onClick={() => signOut()}
-                    className="btn-secondary flex items-center gap-2"
-                  >
-                    <LogOut size={16} />
-                    Sign Out
-                  </button>
-                </Link>
+                <button
+                  onClick={handleSignOut} 
+                  className="btn-secondary flex items-center gap-2"
+                >
+                  <LogOut size={16} />
+                  Sign Out
+                </button>
               </div>
             ) : (
               <button
@@ -85,7 +68,7 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* ... Mobile Menu Button ... */}
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="md:hidden p-2 hover:bg-slate-800 rounded-lg"
@@ -97,40 +80,11 @@ export default function Navbar() {
         {/* Mobile Menu */}
         {isOpen && (
           <div className="md:hidden pb-4 space-y-3 border-t border-slate-700 pt-4">
-            <Link
-              href="/members"
-              className="block text-slate-300 hover:text-primary transition-colors"
-              onClick={() => setIsOpen(false)}
-            >
-              Members
-            </Link>
-            <Link
-              href="/projects"
-              className="block text-slate-300 hover:text-primary transition-colors"
-              onClick={() => setIsOpen(false)}
-            >
-              Projects
-            </Link>
-            <Link
-              href="/events"
-              className="block text-slate-300 hover:text-primary transition-colors"
-              onClick={() => setIsOpen(false)}
-            >
-              Events
-            </Link>
-            {isAdmin && (
-              <Link
-                href="/admin"
-                className="block text-slate-300 hover:text-accent transition-colors"
-                onClick={() => setIsOpen(false)}
-              >
-                Admin
-              </Link>
-            )}
+            {/* ... Mobile Menu Links ... */}
             {session ? (
               <button
                 onClick={() => {
-                  signOut();
+                  handleSignOut();
                   setIsOpen(false);
                 }}
                 className="btn-secondary w-full flex items-center justify-center gap-2"
