@@ -18,7 +18,7 @@ const startServer = async () => {
       });
     });
   } catch (error) {
-    logger.fatal('Failed to start server', {
+    logger.error('Failed to start server', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
     });
