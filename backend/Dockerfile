@@ -47,7 +47,7 @@ COPY --from=builder /app/package.json ./package.json
 
 # 3. Startup script and configuration files
 COPY --from=builder /app/startup.sh ./startup.sh
-RUN chmod +x ./startup.sh # Make the script executable
+RUN chmod +x ./startup.sh
 
 # 4. Copy the Prisma schema (needed if using migrations/studio/etc in the container)
 COPY --from=builder /app/prisma ./prisma 
