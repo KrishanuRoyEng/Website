@@ -5,7 +5,7 @@ import { eventApi, memberApi, projectApi } from '@/lib/api';
 import { Event, Member } from '@/lib/types';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Sparkles, Users, Code, Calendar } from 'lucide-react';
+import { MessageSquarePlus, Users, Code, Calendar } from 'lucide-react';
 
 export default function Home() {
   const [featuredEvents, setFeaturedEvents] = useState<Event[]>([]);
@@ -106,7 +106,7 @@ export default function Home() {
 
         <div className="mb-6 inline-block animate-bounce-slow">
           <span className="badge-primary flex items-center gap-2">
-            <Sparkles size={16} />
+            <MessageSquarePlus size={16} />
             Welcome to CodeClub
           </span>
         </div>
@@ -199,7 +199,7 @@ export default function Home() {
       <section className="container-custom py-20">
         <div className="mb-12">
           <div className="flex items-center gap-3 mb-2">
-            <Sparkles size={28} className="text-accent animate-pulse" />
+            <Calendar size={28} className="text-accent animate-pulse" />
             <h2 className="section-title">Featured Events</h2>
           </div>
           <p className="section-subtitle">Don&apos;t miss our upcoming events and workshops</p>

@@ -4,7 +4,7 @@ import { Member, Skill } from '@/lib/types';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
-import { Github, Save, X, Plus, Trash2, ExternalLink, User, Briefcase, Code, Link as LinkIcon, Award, FolderOpen, Camera, Sparkles } from 'lucide-react';
+import { Github, Save, X, Plus, Trash2, ExternalLink, User, Briefcase, Code, Link as LinkIcon, Award, FolderOpen, Camera, Pencil } from 'lucide-react';
 import Link from 'next/link';
 
 export default function EditProfilePage() {
@@ -233,9 +233,9 @@ export default function EditProfilePage() {
             <div className="flex-1">
               <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
                 Edit Your Profile
-                <Sparkles className="text-accent" size={28} />
+                <Pencil className="text-accent" size={28} />
               </h1>
-              <p className="text-slate-400 text-lg">Customize your developer identity</p>
+              <p className="text-slate-400 text-lg">Customize how you should be defined!</p>
             </div>
           </div>
         </div>
@@ -252,7 +252,7 @@ export default function EditProfilePage() {
 
         {success && (
           <div className="mb-6 p-4 bg-green-900/30 border-l-4 border-green-500 rounded-r text-green-300 animate-slide-down flex items-start gap-3">
-            <Sparkles className="flex-shrink-0 mt-0.5" size={20} />
+            <Pencil className="flex-shrink-0 mt-0.5" size={20} />
             <p>{success}</p>
           </div>
         )}
@@ -682,71 +682,6 @@ export default function EditProfilePage() {
           )}
         </div>
       </section>
-
-      <style jsx>{`
-        @keyframes slide-down {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-slide-down {
-          animation: slide-down 0.3s ease-out;
-        }
-
-        .bg-grid-pattern {
-          background-image: 
-            linear-gradient(to right, rgba(148, 163, 184, 0.1) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(148, 163, 184, 0.1) 1px, transparent 1px);
-          background-size: 40px 40px;
-        }
-
-        .line-clamp-3 {
-          display: -webkit-box;
-          -webkit-line-clamp: 3;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-
-        /* Custom scrollbar */
-        .overflow-y-auto::-webkit-scrollbar {
-          width: 8px;
-        }
-
-        .overflow-y-auto::-webkit-scrollbar-track {
-          background: rgba(30, 41, 59, 0.5);
-          border-radius: 4px;
-        }
-
-        .overflow-y-auto::-webkit-scrollbar-thumb {
-          background: rgba(100, 116, 139, 0.5);
-          border-radius: 4px;
-        }
-
-        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-          background: rgba(100, 116, 139, 0.7);
-        }
-
-        /* Smooth transitions for all interactive elements */
-        input, textarea, select, button {
-          transition: all 0.2s ease;
-        }
-
-        /* Focus ring enhancement */
-        input:focus, textarea:focus, select:focus {
-          box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
-        }
-
-        /* Checkbox custom styling */
-        input[type="checkbox"]:checked {
-          background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
-        }
-      `}</style>
     </Layout>
   );
 }

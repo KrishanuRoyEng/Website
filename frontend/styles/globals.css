@@ -10,42 +10,73 @@
 
 html {
   scroll-behavior: smooth;
+
+  /* --- Firefox Scrollbar --- */
+  scrollbar-color: #4f46e5 transparent; /* thumb | track */
+  scrollbar-width: thin;
 }
 
 body {
   background-color: #0f172a;
   color: #e2e8f0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+    "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
+    "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  
-  /* --- Firefox Scrollbar Support (Limited styling) --- */
-  scrollbar-color: #4b5563 #1e293b; /* thumb color | track color */
-  scrollbar-width: thin; /* 'auto' or 'thin' */
 }
 
-/* ------------------------------------- */
-/* Custom WebKit Scrollbar Styling (Chrome, Safari, Edge) */
-/* ------------------------------------- */
 
-/* Applies to the whole scrollbar (track and thumb) */
+/*  Modern Auto-Fading Scrollbar (WebKit) */
+
+html::-webkit-scrollbar,
 body::-webkit-scrollbar {
-  width: 8px; /* Width of the entire scrollbar */
+  width: 8px;
   background-color: transparent;
 }
 
-/* Defines the color and shape of the thumb (the moving handle) */
-body::-webkit-scrollbar-thumb {
-  background-color: #4b5563; /* Slate-600 for the thumb */
-  border-radius: 10px; /* Rounded ends */
-  border: 2px solid #0f172a; /* Inner border for spacing (matches body BG) */
+/* Track */
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-/* Optional: Style the track (the area the thumb moves along) */
-body::-webkit-scrollbar-track {
-  background: #1e293b; /* Slate-800 for the track */
+/* Thumb (hidden by default) */
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  background-color: rgba(79, 70, 229, 0); /* start transparent */
+  border-radius: 10px;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
+  opacity: 0; /* fully invisible */
+}
+
+/* Show thumb when scrolling */
+html:active::-webkit-scrollbar-thumb,
+body:active::-webkit-scrollbar-thumb,
+html:focus-within::-webkit-scrollbar-thumb,
+body:focus-within::-webkit-scrollbar-thumb {
+  opacity: 1;
+  background-color: rgba(79, 70, 229, 0.6); /* soft indigo */
+}
+
+/* show thumb on hover */
+html:hover::-webkit-scrollbar-thumb,
+body:hover::-webkit-scrollbar-thumb {
+  opacity: 1;
+  background-color: rgba(79, 70, 229, 0.5);
+}
+
+/* Make it more visible when hovered directly */
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(79, 70, 229, 0.9);
+}
+
+/* Optional fade-out smoothness */
+@media (prefers-reduced-motion: no-preference) {
+  html, body {
+    scrollbar-gutter: stable;
+  }
 }
 
 @layer components {
