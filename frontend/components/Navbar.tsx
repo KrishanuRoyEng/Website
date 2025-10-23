@@ -1,15 +1,15 @@
-import Link from 'next/link';
-import { useSession, signIn, signOut } from 'next-auth/react';
-import { Menu, X, LogOut, LogIn } from 'lucide-react';
-import { useState } from 'react';
+import Link from "next/link";
+import { useSession, signIn, signOut } from "next-auth/react";
+import { Menu, X, LogOut, LogIn } from "lucide-react";
+import { useState } from "react";
 
 export default function Navbar() {
   const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
 
-  const isAdmin = (session?.user as any)?.role === 'ADMIN';
+  const isAdmin = (session?.user as any)?.role === "ADMIN";
   const handleSignOut = () => {
-    signOut({ callbackUrl: '/' }); 
+    signOut({ callbackUrl: "/" });
   };
 
   return (
@@ -24,18 +24,38 @@ export default function Navbar() {
           </Link>
 
           {/* ... Desktop Menu Links ... */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-8 ml-12">
             {/* ... Menu Links ... */}
-            <Link href="/members" className="text-slate-300 hover:text-primary transition-colors">Members</Link>
-            <Link href="/projects" className="text-slate-300 hover:text-primary transition-colors">Projects</Link>
-            <Link href="/events" className="text-slate-300 hover:text-primary transition-colors">Events</Link>
+            <Link
+              href="/members"
+              className="text-slate-300 hover:text-primary transition-colors"
+            >
+              Members
+            </Link>
+            <Link
+              href="/projects"
+              className="text-slate-300 hover:text-primary transition-colors"
+            >
+              Projects
+            </Link>
+            <Link
+              href="/events"
+              className="text-slate-300 hover:text-primary transition-colors"
+            >
+              Events
+            </Link>
             {isAdmin && (
-              <Link href="/admin" className="text-slate-300 hover:text-accent transition-colors">Admin</Link>
+              <Link
+                href="/admin"
+                className="text-slate-300 hover:text-accent transition-colors"
+              >
+                Admin
+              </Link>
             )}
           </div>
 
           {/* Auth Button */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-4 ml-auto">
             {session ? (
               <div className="flex items-center gap-4">
                 <Link
@@ -43,14 +63,14 @@ export default function Navbar() {
                   className="flex items-center gap-2 text-slate-300 hover:text-primary transition-colors"
                 >
                   <img
-                    src={session.user?.image || '/avatar.png'}
+                    src={session.user?.image || "/avatar.png"}
                     alt="Avatar"
                     className="w-8 h-8 rounded-full"
                   />
                   {session.user?.name}
                 </Link>
                 <button
-                  onClick={handleSignOut} 
+                  onClick={handleSignOut}
                   className="btn-secondary flex items-center gap-2"
                 >
                   <LogOut size={16} />
@@ -59,7 +79,7 @@ export default function Navbar() {
               </div>
             ) : (
               <button
-                onClick={() => signIn('github')}
+                onClick={() => signIn("github")}
                 className="btn-primary flex items-center gap-2"
               >
                 <LogIn size={16} />
@@ -81,6 +101,38 @@ export default function Navbar() {
         {isOpen && (
           <div className="md:hidden pb-4 space-y-3 border-t border-slate-700 pt-4">
             {/* ... Mobile Menu Links ... */}
+            <Link
+              href="/members"
+              onClick={() => setIsOpen(false)}
+              className="block text-slate-300 hover:text-primary transition-colors"
+            >
+              Members
+            </Link>
+            <Link
+              href="/projects"
+              onClick={() => setIsOpen(false)}
+              className="block text-slate-300 hover:text-primary transition-colors"
+            >
+              Projects
+            </Link>
+            <Link
+              href="/events"
+              onClick={() => setIsOpen(false)}
+              className="block text-slate-300 hover:text-primary transition-colors"
+            >
+              Events
+            </Link>
+            {isAdmin && (
+              <Link
+                href="/admin"
+                onClick={() => setIsOpen(false)}
+                className="block text-slate-300 hover:text-accent transition-colors"
+              >
+                Admin
+              </Link>
+            )}
+
+            {/* Auth Buttons */}
             {session ? (
               <button
                 onClick={() => {
@@ -95,7 +147,7 @@ export default function Navbar() {
             ) : (
               <button
                 onClick={() => {
-                  signIn('github');
+                  signIn("github");
                   setIsOpen(false);
                 }}
                 className="btn-primary w-full flex items-center justify-center gap-2"

@@ -15,6 +15,11 @@ const config: Config = {
         dark: '#0f172a',
         light: '#f8fafc',
       },
+      scrollbar: {
+        scrollbarstyle: 'thin',
+        scrollbartrackcolor: '#f8fafc',
+        scrollbarcolor: '#6366f1',
+      },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-in-out',
         'slide-up': 'slideUp 0.3s ease-in-out',
