@@ -1,6 +1,10 @@
-import prisma from '../config/database';
-import { CreateUserDTO, UpdateUserDTO } from '../types';
-import { User, UserRole } from '@prisma/client';
+import prisma from "../config/database";
+import { CreateUserDTO, UpdateUserDTO } from "../types";
+import { User, UserRole } from "@prisma/client";
+import {
+  notifyNewUserSignup,
+  notifyUserApproved,
+} from "../lib/notifications/index";
 
 export class UserService {
   static async findByGithubId(githubId: string): Promise<User | null> {
@@ -38,9 +42,20 @@ export class UserService {
   }
 
   static async create(data: CreateUserDTO): Promise<User> {
-    return prisma.user.create({
+    const user = await prisma.user.create({
       data,
     });
+    
+    // --- Notification Logic for NEW USER SIGNUP ---
+    await notifyNewUserSignup({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
+      createdAt: user.createdAt,
+    });
+
+    return user;
   }
 
   static async update(id: number, data: UpdateUserDTO): Promise<User> {
@@ -49,12 +64,44 @@ export class UserService {
       data,
     });
   }
+  /**
+   * Update user role and status, triggering approval/rejection notifications if relevant.
+   * @param id The user ID.
+   * @param role The new UserRole.
+   * @param isActive The new isActive status.
+   */
 
-  static async updateRole(id: number, role: UserRole, isActive: boolean): Promise<User> {
-    return prisma.user.update({
+  static async updateRole(
+    id: number,
+    role: UserRole,
+    isActive: boolean,
+    reason?: string
+  ): Promise<User> {
+    const existingUser = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!existingUser) {
+      throw new Error(`User with ID ${id} not found.`);
+    }
+
+    const updatedUser = await prisma.user.update({
       where: { id },
       data: { role, isActive },
-    });
+    }); 
+    
+    // --- Notification Logic ---
+
+    const wasPending = existingUser.role === UserRole.PENDING;
+    const isApproved =
+      (updatedUser.role === UserRole.MEMBER ||
+        updatedUser.role === UserRole.ADMIN) &&
+      updatedUser.isActive === true;
+
+    if (wasPending && isApproved) {
+      await notifyUserApproved(updatedUser);
+    }
+    return updatedUser;
   }
 
   static async getPendingMembers() {
@@ -66,7 +113,7 @@ export class UserService {
         member: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
   }
@@ -87,7 +134,7 @@ export class UserService {
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
   }

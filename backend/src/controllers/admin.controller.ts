@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
-import { UserService } from '../services/user.service';
-import { ProjectService } from '../services/project.service';
-import { EventService } from '../services/event.service';
-import { UserRole } from '@prisma/client';
+import { Request, Response } from "express";
+import { UserService } from "../services/user.service";
+import { ProjectService } from "../services/project.service";
+import { EventService } from "../services/event.service";
+import { UserRole } from "@prisma/client";
 
 export class AdminController {
   static async getPendingMembers(req: Request, res: Response) {
@@ -10,7 +10,7 @@ export class AdminController {
       const pendingMembers = await UserService.getPendingMembers();
       return res.json(pendingMembers);
     } catch (error) {
-      return res.status(500).json({ error: 'Failed to fetch pending members' });
+      return res.status(500).json({ error: "Failed to fetch pending members" });
     }
   }
 
@@ -19,19 +19,21 @@ export class AdminController {
       const userId = parseInt(req.params.userId);
       const { isActive, role } = req.body;
 
-      if (typeof isActive !== 'boolean' || !role) {
-        return res.status(400).json({ error: 'isActive and role are required' });
+      if (typeof isActive !== "boolean" || !role) {
+        return res
+          .status(400)
+          .json({ error: "isActive and role are required" });
       }
 
       if (!Object.values(UserRole).includes(role)) {
-        return res.status(400).json({ error: 'Invalid role' });
+        return res.status(400).json({ error: "Invalid role" });
       }
 
       const user = await UserService.updateRole(userId, role, isActive);
 
       return res.json(user);
     } catch (error) {
-      return res.status(500).json({ error: 'Failed to approve member' });
+      return res.status(500).json({ error: "Failed to approve member" });
     }
   }
 
@@ -40,7 +42,9 @@ export class AdminController {
       const pendingProjects = await ProjectService.getPendingProjects();
       return res.json(pendingProjects);
     } catch (error) {
-      return res.status(500).json({ error: 'Failed to fetch pending projects' });
+      return res
+        .status(500)
+        .json({ error: "Failed to fetch pending projects" });
     }
   }
 
@@ -49,15 +53,15 @@ export class AdminController {
       const projectId = parseInt(req.params.projectId);
       const { isApproved } = req.body;
 
-      if (typeof isApproved !== 'boolean') {
-        return res.status(400).json({ error: 'isApproved is required' });
+      if (typeof isApproved !== "boolean") {
+        return res.status(400).json({ error: "isApproved is required" });
       }
 
-      const project = await ProjectService.approve(projectId, isApproved);
+      const project = await ProjectService.updateApprovalStatus(projectId, isApproved);
 
       return res.json(project);
     } catch (error) {
-      return res.status(500).json({ error: 'Failed to approve project' });
+      return res.status(500).json({ error: "Failed to approve project" });
     }
   }
 
@@ -67,9 +71,9 @@ export class AdminController {
 
       await ProjectService.delete(projectId);
 
-      return res.json({ message: 'Project removed successfully' });
+      return res.json({ message: "Project removed successfully" });
     } catch (error) {
-      return res.status(500).json({ error: 'Failed to remove project' });
+      return res.status(500).json({ error: "Failed to remove project" });
     }
   }
 
@@ -78,15 +82,15 @@ export class AdminController {
       const eventId = parseInt(req.params.eventId);
       const { isFeatured } = req.body;
 
-      if (typeof isFeatured !== 'boolean') {
-        return res.status(400).json({ error: 'isFeatured is required' });
+      if (typeof isFeatured !== "boolean") {
+        return res.status(400).json({ error: "isFeatured is required" });
       }
 
       const event = await EventService.setFeatured(eventId, isFeatured);
 
       return res.json(event);
     } catch (error) {
-      return res.status(500).json({ error: 'Failed to update event' });
+      return res.status(500).json({ error: "Failed to update event" });
     }
   }
 
@@ -99,7 +103,7 @@ export class AdminController {
 
       return res.json(users);
     } catch (error) {
-      return res.status(500).json({ error: 'Failed to fetch users' });
+      return res.status(500).json({ error: "Failed to fetch users" });
     }
   }
 
@@ -111,7 +115,7 @@ export class AdminController {
       const user = await UserService.findById(userId);
 
       if (!user) {
-        return res.status(404).json({ error: 'User not found' });
+        return res.status(404).json({ error: "User not found" });
       }
 
       const updates: any = {};
@@ -123,7 +127,7 @@ export class AdminController {
 
       return res.json(updated);
     } catch (error) {
-      return res.status(500).json({ error: 'Failed to update user' });
+      return res.status(500).json({ error: "Failed to update user" });
     }
   }
 }

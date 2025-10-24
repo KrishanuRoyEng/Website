@@ -77,7 +77,8 @@ export const skillApi = {
 };
 
 export const tagApi = {
-  getAll: () => apiClient.get('/tags'),
+  getAll: (params?: any) => apiClient.get('/tags', { params }),
+  search: (query: string) => apiClient.get('/tags/search', { params: { q: query } }),
   create: (data: any) => apiClient.post('/tags', data),
   delete: (id: number) => apiClient.delete(`/tags/${id}`),
 };

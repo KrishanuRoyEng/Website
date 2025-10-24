@@ -98,7 +98,7 @@ export default function AdminDashboard() {
         const skillsRes = await skillApi.getAll();
         setSkills(skillsRes.data);
       } else if (activeTab === "tags") {
-        const tagsRes = await tagApi.getAll();
+        const tagsRes = await tagApi.getAll({});
         setTags(tagsRes.data);
       }
     } catch (error: any) {

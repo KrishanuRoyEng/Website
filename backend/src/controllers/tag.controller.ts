@@ -1,51 +1,61 @@
 import { Request, Response } from 'express';
 import { TagService } from '../services/tag.service';
+import { ProjectService } from '../services/project.service';
+import { asyncHandler } from '../utils/asyncHandler';
 
 export class TagController {
-  static async getAll(req: Request, res: Response) {
-    try {
-      const skip = parseInt(req.query.skip as string) || 0;
-      const limit = parseInt(req.query.limit as string) || 100;
+    
+    // Autocomplete Search Feature: GET /api/tags/search?q=query
+    static searchTags = asyncHandler(async (req: Request, res: Response) => {
+        // Get the search query from the URL parameter 'q'
+        const query = req.query.q as string;
 
-      const tags = await TagService.getAll(skip, limit);
+        if (!query || query.length === 0) {
+            // Return an empty array if no query is provided
+            return res.status(200).json([]); 
+        }
 
-      return res.json(tags);
-    } catch (error) {
-      return res.status(500).json({ error: 'Failed to fetch tags' });
-    }
-  }
+        // ProjectService is used for searchTags because of the Tag/Project relationship logic
+        const tags = await ProjectService.searchTags(query);
+        
+        return res.status(200).json(tags);
+    });
 
-  static async create(req: Request, res: Response) {
-    try {
-      const { name } = req.body;
+    // Paginated List Feature: GET /api/tags?skip=...&limit=...
+    static getPaginatedTags = asyncHandler(async (req: Request, res: Response) => {
+        const skip = parseInt(req.query.skip as string) || 0;
+        const limit = parseInt(req.query.limit as string) || 100;
 
-      if (!name) {
-        return res.status(400).json({ error: 'Tag name is required' });
-      }
+        const tags = await TagService.getAll(skip, limit);
 
-      const existing = await TagService.findByName(name);
+        return res.json(tags);
+    });
+    
+    // Creation Feature: POST /api/tags
+    static create = asyncHandler(async (req: Request, res: Response) => {
+        const { name } = req.body;
 
-      if (existing) {
-        return res.status(400).json({ error: 'Tag already exists' });
-      }
+        if (!name) {
+            return res.status(400).json({ error: 'Tag name is required' });
+        }
 
-      const tag = await TagService.create(name);
+        const existing = await TagService.findByName(name);
 
-      return res.status(201).json(tag);
-    } catch (error) {
-      return res.status(500).json({ error: 'Failed to create tag' });
-    }
-  }
+        if (existing) {
+            return res.status(400).json({ error: 'Tag already exists' });
+        }
 
-  static async delete(req: Request, res: Response) {
-    try {
-      const id = parseInt(req.params.id);
+        const tag = await TagService.create(name);
 
-      await TagService.delete(id);
+        return res.status(201).json(tag);
+    });
 
-      return res.json({ message: 'Tag deleted successfully' });
-    } catch (error) {
-      return res.status(500).json({ error: 'Failed to delete tag' });
-    }
-  }
+    // Deletion Feature: DELETE /api/tags/:id
+    static delete = asyncHandler(async (req: Request, res: Response) => {
+        const id = parseInt(req.params.id);
+
+        await TagService.delete(id);
+
+        return res.json({ message: 'Tag deleted successfully' });
+    });
 }

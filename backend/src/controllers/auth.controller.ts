@@ -25,7 +25,6 @@ export class AuthController {
           githubUrl: githubUrl || undefined,
         });
 
-        // Create member profile
         await MemberService.create({
           userId: user.id,
           fullName: username,
