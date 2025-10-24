@@ -55,8 +55,13 @@ export const authOptions: NextAuthOptions = {
         try {
           const profile = rawProfile as unknown as GithubProfile;
 
-          // Try to call backend, but don't fail sign-in if backend is unavailable
+          // Set basic user info from GitHub first
+          user.id = profile.id;
+          user.role = 'PENDING'; // Default role
           try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+
             const response = await fetch(
               `${process.env.NEXT_PUBLIC_API_URL}/auth/github`,
               {
@@ -69,9 +74,11 @@ export const authOptions: NextAuthOptions = {
                   avatarUrl: profile.avatar_url,
                   githubUrl: profile.html_url,
                 }),
-                signal: AbortSignal.timeout(5000),
+                signal: controller.signal,
               }
             );
+
+            clearTimeout(timeoutId);
 
             if (response.ok) {
               const userData = await response.json();
@@ -80,15 +87,11 @@ export const authOptions: NextAuthOptions = {
               user.accessToken = userData.token;
             } else {
               console.warn('Backend auth endpoint returned error:', response.status);
-              // Still allow sign-in even if backend fails, user can still authenticate
-              user.id = profile.id;
-              user.role = 'PENDING';
+              // Continue with basic GitHub data
             }
           } catch (backendError) {
-            console.warn('Backend unavailable during sign-in, continuing with GitHub data:', backendError);
-            // If backend is unavailable, create minimal user object from GitHub data
-            user.id = profile.id;
-            user.role = 'PENDING';
+            console.warn('Backend unavailable during sign-in:', backendError);
+            // Continue with basic GitHub data - don't fail authentication
           }
         } catch (error) {
           console.error('Unexpected error during sign in:', error);
@@ -98,10 +101,11 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
 
-    async jwt({ token, user }) {
-      if (user) {
+    async jwt({ token, user, account }) {
+      // Initial sign in
+      if (user && account) {
         token.id = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
-        token.role = user.role;
+        token.role = user.role || 'PENDING';
         token.accessToken = user.accessToken;
       }
       return token;
@@ -119,6 +123,7 @@ export const authOptions: NextAuthOptions = {
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === 'development', // Enable debug mode
 };
 
 export default NextAuth(authOptions);

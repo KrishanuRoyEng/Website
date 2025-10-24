@@ -4,7 +4,8 @@ import { authenticate, requireAdmin } from '../middlewares/auth.middleware';
 
 const router = Router();
 
-router.get('/', TagController.getAll);
+router.get('/search', TagController.searchTags);
+router.get('/', TagController.getPaginatedTags); 
 router.post('/', authenticate, requireAdmin, TagController.create);
 router.delete('/:id', authenticate, requireAdmin, TagController.delete);
 

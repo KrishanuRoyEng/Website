@@ -1,5 +1,5 @@
 import { Project } from '@/lib/types';
-import { Github, ExternalLink, Tag } from 'lucide-react';
+import { Github, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
 interface ProjectCardProps {
@@ -46,15 +46,25 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           </p>
         )}
 
-        {/* Tags */}
-        {project.tags && project.tags.length > 0 && (
+        {/* Tags - Now correctly typed */}
+        {project.tags && project.tags.length > 0 ? (
           <div className="flex flex-wrap gap-2 mb-4">
-            {project.tags.map((tag) => (
-              <span key={tag.id} className="badge-secondary text-xs">
-                {tag.name}
-              </span>
-            ))}
+            {project.tags.map((projectTag, index) => {
+              const tag = projectTag.tag;
+              const tagId = tag?.id || index;
+              const tagName = tag?.name;
+              
+              if (!tagName) return null;
+              
+              return (
+                <span key={tagId} className="badge-secondary text-xs">
+                  {tagName}
+                </span>
+              );
+            })}
           </div>
+        ) : (
+          <div className="text-xs text-gray-500 mb-4">No tags</div>
         )}
 
         {/* Links */}
@@ -88,7 +98,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-700">
             <img
               src={project.member.user.avatarUrl || '/avatar.png'}
-              alt={project.member.fullName}
+              alt={project.member.fullName || project.member.user.username}
               className="w-8 h-8 rounded-full"
             />
             <Link

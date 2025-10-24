@@ -54,10 +54,10 @@ export interface Project {
   imageUrl?: string;
   category?: ProjectCategory;
   isApproved: boolean;
-  member: Member;
-  tags: Tag[];
+  tags: ProjectTag[];
   createdAt: string;
   updatedAt: string;
+  member?: Member;
 }
 
 export interface Tag {
@@ -85,4 +85,18 @@ export interface Event {
   createdBy?: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ProjectUI extends Omit<Project, "tags"> {
+  tags: string[];
+}
+
+export const toProjectUI = (p: Project): ProjectUI => ({
+  ...p,
+  tags: p.tags.map((t) => (typeof t === "string" ? t : t.tag.name)), // Updated to handle ProjectTag structure
+});
+
+export interface ProjectWithRelations extends Project {
+  member: Member;
+  tags: ProjectTag[];
 }

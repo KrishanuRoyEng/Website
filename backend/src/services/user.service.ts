@@ -1,6 +1,11 @@
-import prisma from '../config/database';
-import { CreateUserDTO, UpdateUserDTO } from '../types';
-import { User, UserRole } from '@prisma/client';
+import prisma from "../config/database";
+import { CreateUserDTO, UpdateUserDTO } from "../types";
+import { User, UserRole } from "@prisma/client";
+import logger from "../utils/logger";
+import {
+  notifyNewUserSignup,
+  notifyUserApproved,
+} from "../lib/notifications/index";
 
 export class UserService {
   static async findByGithubId(githubId: string): Promise<User | null> {
@@ -38,9 +43,20 @@ export class UserService {
   }
 
   static async create(data: CreateUserDTO): Promise<User> {
-    return prisma.user.create({
+    const user = await prisma.user.create({
       data,
     });
+
+    // Notify admins about new user signup
+    await notifyNewUserSignup({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
+      createdAt: user.createdAt,
+    });
+
+    return user;
   }
 
   static async update(id: number, data: UpdateUserDTO): Promise<User> {
@@ -50,11 +66,39 @@ export class UserService {
     });
   }
 
-  static async updateRole(id: number, role: UserRole, isActive: boolean): Promise<User> {
-    return prisma.user.update({
+  /**
+   * Update user role and status, triggering approval notifications if relevant
+   */
+  static async updateRole(
+    id: number,
+    role: UserRole,
+    isActive: boolean,
+    reason?: string
+  ): Promise<User> {
+    const existingUser = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!existingUser) {
+      throw new Error(`User with ID ${id} not found.`);
+    }
+
+    const updatedUser = await prisma.user.update({
       where: { id },
       data: { role, isActive },
     });
+
+    // Notification Logic
+    const wasPending = existingUser.role === UserRole.PENDING;
+    const isApproved =
+      (updatedUser.role === UserRole.MEMBER || updatedUser.role === UserRole.ADMIN) &&
+      updatedUser.isActive === true;
+
+    if (wasPending && isApproved) {
+      await notifyUserApproved(updatedUser);
+    }
+
+    return updatedUser;
   }
 
   static async getPendingMembers() {
@@ -66,7 +110,7 @@ export class UserService {
         member: true,
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
   }
@@ -87,7 +131,7 @@ export class UserService {
         },
       },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: "desc",
       },
     });
   }

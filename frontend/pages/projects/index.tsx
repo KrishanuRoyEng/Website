@@ -44,7 +44,7 @@ export default function ProjectsPage() {
     const matchesCategory = !selectedCategory || project.category === selectedCategory;
     const matchesTags =
       selectedTags.length === 0 ||
-      selectedTags.every((tagId) => project.tags.some((t) => t.id === tagId));
+      selectedTags.every((tagId) => project.tags.some((t) => t.tagId === tagId));
     
     return matchesCategory && matchesTags;
   });
