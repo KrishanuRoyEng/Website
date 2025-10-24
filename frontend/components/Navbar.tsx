@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
-import { Menu, X, LogOut, LogIn } from "lucide-react";
+import { Menu, X, LogOut, LogIn, User } from "lucide-react";
 import { useState } from "react";
 
 export default function Navbar() {
@@ -16,62 +16,65 @@ export default function Navbar() {
     <nav className="bg-slate-900/50 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
       <div className="container-custom">
         <div className="flex justify-between items-center py-4">
-          {/* ... Logo Link ... */}
-          <Link href="/" className="text-2xl font-bold">
+          {/* Logo */}
+          <Link href="/" className="text-2xl font-bold flex-shrink-0">
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               CodeClub
             </span>
           </Link>
 
-          {/* ... Desktop Menu Links ... */}
-          <div className="hidden md:flex items-center gap-8 ml-12">
-            {/* ... Menu Links ... */}
+          {/* Desktop Menu Links */}
+          <div className="hidden md:flex items-center gap-6 lg:gap-8 ml-8">
             <Link
               href="/members"
-              className="text-slate-300 hover:text-primary transition-colors"
+              className="text-slate-300 hover:text-primary transition-colors whitespace-nowrap"
             >
               Members
             </Link>
             <Link
               href="/projects"
-              className="text-slate-300 hover:text-primary transition-colors"
+              className="text-slate-300 hover:text-primary transition-colors whitespace-nowrap"
             >
               Projects
             </Link>
             <Link
               href="/events"
-              className="text-slate-300 hover:text-primary transition-colors"
+              className="text-slate-300 hover:text-primary transition-colors whitespace-nowrap"
             >
               Events
             </Link>
             {isAdmin && (
               <Link
                 href="/admin"
-                className="text-slate-300 hover:text-accent transition-colors"
+                className="text-slate-300 hover:text-accent transition-colors whitespace-nowrap"
               >
                 Admin
               </Link>
             )}
           </div>
 
-          {/* Auth Button */}
+          {/* Desktop Auth Section */}
           <div className="hidden md:flex items-center gap-4 ml-auto">
             {session ? (
               <div className="flex items-center gap-4">
+                {/* Profile Link with Truncated Name */}
                 <Link
                   href={`/members/profile`}
-                  className="flex items-center gap-2 text-slate-300 hover:text-primary transition-colors"
+                  className="flex items-center gap-2 text-slate-300 hover:text-primary transition-colors group min-w-0 max-w-[180px]"
+                  title={session.user?.name || "Profile"}
                 >
                   <img
                     src={session.user?.image || "/avatar.png"}
                     alt="Avatar"
-                    className="w-8 h-8 rounded-full"
+                    className="w-8 h-8 rounded-full flex-shrink-0"
                   />
-                  {session.user?.name}
+                  <span className="truncate max-w-[120px]">
+                    {session.user?.name}
+                  </span>
                 </Link>
                 <button
                   onClick={handleSignOut}
-                  className="btn-secondary flex items-center gap-2"
+                  className="btn-secondary flex items-center gap-2 whitespace-nowrap flex-shrink-0"
                 >
                   <LogOut size={16} />
                   Sign Out
@@ -80,18 +83,18 @@ export default function Navbar() {
             ) : (
               <button
                 onClick={() => signIn("github")}
-                className="btn-primary flex items-center gap-2"
+                className="btn-primary flex items-center gap-2 whitespace-nowrap"
               >
                 <LogIn size={16} />
-                Sign In with GitHub
+                Sign In
               </button>
             )}
           </div>
 
-          {/* ... Mobile Menu Button ... */}
+          {/* Mobile Menu Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 hover:bg-slate-800 rounded-lg"
+            className="md:hidden p-2 hover:bg-slate-800 rounded-lg flex-shrink-0"
           >
             {isOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -100,25 +103,25 @@ export default function Navbar() {
         {/* Mobile Menu */}
         {isOpen && (
           <div className="md:hidden pb-4 space-y-3 border-t border-slate-700 pt-4">
-            {/* ... Mobile Menu Links ... */}
+            {/* Mobile Menu Links */}
             <Link
               href="/members"
               onClick={() => setIsOpen(false)}
-              className="block text-slate-300 hover:text-primary transition-colors"
+              className="block text-slate-300 hover:text-primary transition-colors py-2"
             >
               Members
             </Link>
             <Link
               href="/projects"
               onClick={() => setIsOpen(false)}
-              className="block text-slate-300 hover:text-primary transition-colors"
+              className="block text-slate-300 hover:text-primary transition-colors py-2"
             >
               Projects
             </Link>
             <Link
               href="/events"
               onClick={() => setIsOpen(false)}
-              className="block text-slate-300 hover:text-primary transition-colors"
+              className="block text-slate-300 hover:text-primary transition-colors py-2"
             >
               Events
             </Link>
@@ -126,20 +129,43 @@ export default function Navbar() {
               <Link
                 href="/admin"
                 onClick={() => setIsOpen(false)}
-                className="block text-slate-300 hover:text-accent transition-colors"
+                className="block text-slate-300 hover:text-accent transition-colors py-2"
               >
                 Admin
               </Link>
             )}
 
-            {/* Auth Buttons */}
+            {/* Mobile User Info */}
+            {session && (
+              <div className="flex items-center gap-3 py-3 border-t border-slate-700 mt-2 pt-3">
+                <img
+                  src={session.user?.image || "/avatar.png"}
+                  alt="Avatar"
+                  className="w-10 h-10 rounded-full"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-medium truncate">
+                    {session.user?.name}
+                  </p>
+                  <Link
+                    href={`/members/profile`}
+                    onClick={() => setIsOpen(false)}
+                    className="text-primary text-sm hover:underline"
+                  >
+                    View Profile
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {/* Mobile Auth Buttons */}
             {session ? (
               <button
                 onClick={() => {
                   handleSignOut();
                   setIsOpen(false);
                 }}
-                className="btn-secondary w-full flex items-center justify-center gap-2"
+                className="btn-secondary w-full flex items-center justify-center gap-2 py-3"
               >
                 <LogOut size={16} />
                 Sign Out
@@ -150,10 +176,10 @@ export default function Navbar() {
                   signIn("github");
                   setIsOpen(false);
                 }}
-                className="btn-primary w-full flex items-center justify-center gap-2"
+                className="btn-primary w-full flex items-center justify-center gap-2 py-3"
               >
                 <LogIn size={16} />
-                Sign In
+                Sign In with GitHub
               </button>
             )}
           </div>

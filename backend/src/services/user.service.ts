@@ -1,6 +1,7 @@
 import prisma from "../config/database";
 import { CreateUserDTO, UpdateUserDTO } from "../types";
 import { User, UserRole } from "@prisma/client";
+import logger from "../utils/logger";
 import {
   notifyNewUserSignup,
   notifyUserApproved,
@@ -45,8 +46,8 @@ export class UserService {
     const user = await prisma.user.create({
       data,
     });
-    
-    // --- Notification Logic for NEW USER SIGNUP ---
+
+    // Notify admins about new user signup
     await notifyNewUserSignup({
       id: user.id,
       username: user.username,
@@ -64,13 +65,10 @@ export class UserService {
       data,
     });
   }
-  /**
-   * Update user role and status, triggering approval/rejection notifications if relevant.
-   * @param id The user ID.
-   * @param role The new UserRole.
-   * @param isActive The new isActive status.
-   */
 
+  /**
+   * Update user role and status, triggering approval notifications if relevant
+   */
   static async updateRole(
     id: number,
     role: UserRole,
@@ -88,19 +86,18 @@ export class UserService {
     const updatedUser = await prisma.user.update({
       where: { id },
       data: { role, isActive },
-    }); 
-    
-    // --- Notification Logic ---
+    });
 
+    // Notification Logic
     const wasPending = existingUser.role === UserRole.PENDING;
     const isApproved =
-      (updatedUser.role === UserRole.MEMBER ||
-        updatedUser.role === UserRole.ADMIN) &&
+      (updatedUser.role === UserRole.MEMBER || updatedUser.role === UserRole.ADMIN) &&
       updatedUser.isActive === true;
 
     if (wasPending && isApproved) {
       await notifyUserApproved(updatedUser);
     }
+
     return updatedUser;
   }
 

@@ -3,131 +3,87 @@ import { UserService } from "../services/user.service";
 import { ProjectService } from "../services/project.service";
 import { EventService } from "../services/event.service";
 import { UserRole } from "@prisma/client";
+import { asyncHandler } from "../utils/asyncHandler"; // Adjust import path as needed
 
 export class AdminController {
-  static async getPendingMembers(req: Request, res: Response) {
-    try {
-      const pendingMembers = await UserService.getPendingMembers();
-      return res.json(pendingMembers);
-    } catch (error) {
-      return res.status(500).json({ error: "Failed to fetch pending members" });
+  static getPendingMembers = asyncHandler(async (req: Request, res: Response) => {
+    const pendingMembers = await UserService.getPendingMembers();
+    return res.json(pendingMembers);
+  });
+
+  static approveMember = asyncHandler(async (req: Request, res: Response) => {
+    const userId = parseInt(req.params.userId);
+    const { isActive, role } = req.body;
+
+    if (typeof isActive !== "boolean" || !role) {
+      return res.status(400).json({ error: "isActive and role are required" });
     }
-  }
 
-  static async approveMember(req: Request, res: Response) {
-    try {
-      const userId = parseInt(req.params.userId);
-      const { isActive, role } = req.body;
-
-      if (typeof isActive !== "boolean" || !role) {
-        return res
-          .status(400)
-          .json({ error: "isActive and role are required" });
-      }
-
-      if (!Object.values(UserRole).includes(role)) {
-        return res.status(400).json({ error: "Invalid role" });
-      }
-
-      const user = await UserService.updateRole(userId, role, isActive);
-
-      return res.json(user);
-    } catch (error) {
-      return res.status(500).json({ error: "Failed to approve member" });
+    if (!Object.values(UserRole).includes(role)) {
+      return res.status(400).json({ error: "Invalid role" });
     }
-  }
 
-  static async getPendingProjects(req: Request, res: Response) {
-    try {
-      const pendingProjects = await ProjectService.getPendingProjects();
-      return res.json(pendingProjects);
-    } catch (error) {
-      return res
-        .status(500)
-        .json({ error: "Failed to fetch pending projects" });
+    const user = await UserService.updateRole(userId, role, isActive);
+    return res.json(user);
+  });
+
+  static getPendingProjects = asyncHandler(async (req: Request, res: Response) => {
+    const pendingProjects = await ProjectService.getPendingProjects();
+    return res.json(pendingProjects);
+  });
+
+  static approveProject = asyncHandler(async (req: Request, res: Response) => {
+    const projectId = parseInt(req.params.projectId);
+    const { isApproved, reason } = req.body;
+
+    if (typeof isApproved !== "boolean") {
+      return res.status(400).json({ error: "isApproved is required" });
     }
-  }
 
-  static async approveProject(req: Request, res: Response) {
-    try {
-      const projectId = parseInt(req.params.projectId);
-      const { isApproved } = req.body;
+    const project = await ProjectService.updateApprovalStatus(projectId, isApproved, reason);
+    return res.json(project);
+  });
 
-      if (typeof isApproved !== "boolean") {
-        return res.status(400).json({ error: "isApproved is required" });
-      }
+  static removeProject = asyncHandler(async (req: Request, res: Response) => {
+    const projectId = parseInt(req.params.projectId);
+    await ProjectService.delete(projectId);
+    return res.json({ message: "Project removed successfully" });
+  });
 
-      const project = await ProjectService.updateApprovalStatus(projectId, isApproved);
+  static setEventFeatured = asyncHandler(async (req: Request, res: Response) => {
+    const eventId = parseInt(req.params.eventId);
+    const { isFeatured } = req.body;
 
-      return res.json(project);
-    } catch (error) {
-      return res.status(500).json({ error: "Failed to approve project" });
+    if (typeof isFeatured !== "boolean") {
+      return res.status(400).json({ error: "isFeatured is required" });
     }
-  }
 
-  static async removeProject(req: Request, res: Response) {
-    try {
-      const projectId = parseInt(req.params.projectId);
+    const event = await EventService.setFeatured(eventId, isFeatured);
+    return res.json(event);
+  });
 
-      await ProjectService.delete(projectId);
+  static getAllUsers = asyncHandler(async (req: Request, res: Response) => {
+    const skip = parseInt(req.query.skip as string) || 0;
+    const limit = parseInt(req.query.limit as string) || 100;
+    const users = await UserService.getAllUsers(skip, limit);
+    return res.json(users);
+  });
 
-      return res.json({ message: "Project removed successfully" });
-    } catch (error) {
-      return res.status(500).json({ error: "Failed to remove project" });
+  static updateUserRole = asyncHandler(async (req: Request, res: Response) => {
+    const userId = parseInt(req.params.userId);
+    const { role, isActive, isLead } = req.body;
+
+    const user = await UserService.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
-  }
 
-  static async setEventFeatured(req: Request, res: Response) {
-    try {
-      const eventId = parseInt(req.params.eventId);
-      const { isFeatured } = req.body;
+    const updates: any = {};
+    if (role !== undefined) updates.role = role;
+    if (isActive !== undefined) updates.isActive = isActive;
+    if (isLead !== undefined) updates.isLead = isLead;
 
-      if (typeof isFeatured !== "boolean") {
-        return res.status(400).json({ error: "isFeatured is required" });
-      }
-
-      const event = await EventService.setFeatured(eventId, isFeatured);
-
-      return res.json(event);
-    } catch (error) {
-      return res.status(500).json({ error: "Failed to update event" });
-    }
-  }
-
-  static async getAllUsers(req: Request, res: Response) {
-    try {
-      const skip = parseInt(req.query.skip as string) || 0;
-      const limit = parseInt(req.query.limit as string) || 100;
-
-      const users = await UserService.getAllUsers(skip, limit);
-
-      return res.json(users);
-    } catch (error) {
-      return res.status(500).json({ error: "Failed to fetch users" });
-    }
-  }
-
-  static async updateUserRole(req: Request, res: Response) {
-    try {
-      const userId = parseInt(req.params.userId);
-      const { role, isActive, isLead } = req.body;
-
-      const user = await UserService.findById(userId);
-
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
-
-      const updates: any = {};
-      if (role !== undefined) updates.role = role;
-      if (isActive !== undefined) updates.isActive = isActive;
-      if (isLead !== undefined) updates.isLead = isLead;
-
-      const updated = await UserService.update(userId, updates);
-
-      return res.json(updated);
-    } catch (error) {
-      return res.status(500).json({ error: "Failed to update user" });
-    }
-  }
+    const updated = await UserService.update(userId, updates);
+    return res.json(updated);
+  });
 }

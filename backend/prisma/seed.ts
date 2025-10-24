@@ -2,9 +2,71 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  // Clear existing data
-  await prisma.tag.deleteMany();
-  await prisma.skill.deleteMany();
+  console.log("🌱 Seeding user and member data...");
+
+  // Super-Admin Data from Environment Variables
+  const superadminGithubId = process.env.SUPERADMIN_GITHUB_ID;
+  const superadminUsername = process.env.SUPERADMIN_USERNAME;
+  const superadminEmail = process.env.SUPERADMIN_EMAIL;
+  const superadminAvatarUrl = process.env.SUPERADMIN_AVATAR_URL;
+  const superadminGithubUrl = process.env.SUPERADMIN_GITHUB_URL;
+
+  // Check if all required superadmin environment variables are set
+  const hasSuperadminConfig = 
+    superadminGithubId && 
+    superadminUsername && 
+    superadminEmail
+
+  if (hasSuperadminConfig) {
+    // Super-Admin User Data
+    const userData = {
+      githubId: superadminGithubId,
+      username: superadminUsername,
+      email: superadminEmail,
+      avatarUrl: superadminAvatarUrl,
+      githubUrl: superadminGithubUrl,
+      role: "ADMIN" as const,
+      isActive: true,
+      isLead: true,
+    };
+
+    // Super-Admin Profile Data
+    const memberData = {
+      fullName: "Admin",
+      bio: "Full-stack developer passionate about building amazing web applications and leading tech communities.",
+      roleTitle: "Full-stack Developer",
+      devStack: "React, Next.js, Node.js, TypeScript, PostgreSQL, Prisma"
+    };
+
+    try {
+      // Create or update user
+      const user = await prisma.user.upsert({
+        where: { githubId: userData.githubId },
+        update: userData,
+        create: userData,
+      });
+
+      console.log(`✅ Superadmin user ${user.username} seeded successfully`);
+
+      // Create or update member profile
+      const member = await prisma.member.upsert({
+        where: { userId: user.id },
+        update: { ...memberData, userId: user.id },
+        create: { ...memberData, userId: user.id },
+      });
+
+      console.log(`✅ Superadmin member profile for ${member.fullName} seeded successfully`);
+      console.log(`📊 User ID: ${user.id}, Member ID: ${member.id}`);
+    } catch (error) {
+      console.error("❌ Error seeding superadmin data:", error);
+    }
+  } else {
+    console.log("⚠️ Superadmin environment variables not fully set, skipping superadmin seeding");
+    console.log("Set these environment variables in Railway:");
+    console.log("SUPERADMIN_GITHUB_ID, SUPERADMIN_USERNAME, SUPERADMIN_EMAIL, SUPERADMIN_FULL_NAME");
+  }
+
+  // --- PUBLIC SEED DATA (Always runs) ---
 
   // --- TAGS ---
   const tags = [
@@ -152,15 +214,40 @@ async function main() {
     { name: "Unreal Engine", category: "Game Dev" },
   ];
 
-  await prisma.tag.createMany({
-    data: tags.map((name) => ({ name })),
-  });
+  // Add only new tags that don't exist
+  let tagsAdded = 0;
+  for (const tagName of tags) {
+    try {
+      await prisma.tag.upsert({
+        where: { name: tagName },
+        update: {}, // Don't update if exists
+        create: { name: tagName },
+      });
+      tagsAdded++;
+    } catch (error) {
+      // Silent skip for existing tags
+    }
+  }
 
-  await prisma.skill.createMany({
-    data: skills,
-  });
+  // Add only new skills that don't exist
+  let skillsAdded = 0;
+  for (const skill of skills) {
+    try {
+      await prisma.skill.upsert({
+        where: { name: skill.name },
+        update: {}, // Don't update if exists
+        create: skill,
+      });
+      skillsAdded++;
+    } catch (error) {
+      // Silent skip for existing skills
+    }
+  }
 
-  console.log(`✅ Seeded ${tags.length} tags and ${skills.length} skills.`);
+  console.log(`✅ Seeded ${tagsAdded} new tags and ${skillsAdded} new skills.`);
+  console.log(
+    `📊 Total tags: ${await prisma.tag.count()}, Total skills: ${await prisma.skill.count()}`
+  );
 }
 
 main()

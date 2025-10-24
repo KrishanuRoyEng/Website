@@ -9,7 +9,7 @@ import logger from './utils/logger';
 const app: Application = express();
 
 app.use(cors({
-  origin: [config.frontend.url, 'http://localhost:3000', 'http://127.0.0.1:3000'],
+  origin: [config.frontend.url, 'http://localhost:3001', 'http://127.0.0.1:3001'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],

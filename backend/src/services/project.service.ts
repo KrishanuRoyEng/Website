@@ -1,44 +1,28 @@
 import prisma from "../config/database";
 import { CreateProjectDTO, UpdateProjectDTO, ProjectQuery } from "../types";
 import { Project, ProjectCategory } from "@prisma/client";
-
-// Helper function to clean tag names (remove '#') and prepare the connectOrCreate structure
-const mapTagNamesToNestedWrites = (tagNames: string[]) => {
-  return tagNames.map((tagNameWithHash: string) => {
-    const tagName = tagNameWithHash.startsWith('#')
-      ? tagNameWithHash.substring(1)
-      : tagNameWithHash;
-    
-    return {
-      tag: {
-        connectOrCreate: {
-          where: { name: tagName }, 
-          create: { name: tagName }  
-        }
-      }
-    };
-  });
-};
+import {
+  notifyNewProjectSubmission,
+  notifyProjectApproved,
+  notifyProjectRejected,
+} from "../lib/notifications/index";
 
 export class ProjectService {
-  
   static async searchTags(query: string) {
-    const cleanedQuery = query.startsWith('#')
-      ? query.substring(1)
-      : query;
+    const cleanedQuery = query.startsWith("#") ? query.substring(1) : query;
 
     return prisma.tag.findMany({
       where: {
         name: {
           startsWith: cleanedQuery,
-          mode: 'insensitive',
-        }
+          mode: "insensitive",
+        },
       },
-      select: { 
+      select: {
         id: true,
-        name: true
+        name: true,
       },
-      take: 10, // Limit the results for a clean dropdown
+      take: 10,
     });
   }
 
@@ -127,20 +111,52 @@ export class ProjectService {
   ): Promise<Project> {
     const { tags: tagNames, ...projectData } = data;
 
-    const tagOperations = tagNames ? mapTagNamesToNestedWrites(tagNames) : [];
-
-    return prisma.project.create({
+    // Create the project first
+    const project = await prisma.project.create({
       data: {
         isApproved: false,
         ...projectData,
         memberId,
-        tags: tagNames
-          ? {
-              create: tagOperations,
-            }
-          : undefined,
       },
+    });
+
+    // Then create the tag relations
+    if (tagNames && tagNames.length > 0) {
+      const tagOperations = [];
+
+      for (const tagNameWithHash of tagNames) {
+        const tagName = tagNameWithHash.startsWith("#")
+          ? tagNameWithHash.substring(1)
+          : tagNameWithHash;
+
+        const tag = await prisma.tag.upsert({
+          where: { name: tagName },
+          update: {},
+          create: { name: tagName },
+        });
+
+        tagOperations.push(
+          prisma.projectTag.create({
+            data: {
+              projectId: project.id,
+              tagId: tag.id,
+            },
+          })
+        );
+      }
+
+      await Promise.all(tagOperations);
+    }
+
+    // Get the full project with member info for notification
+    const projectWithMember = await prisma.project.findUnique({
+      where: { id: project.id },
       include: {
+        member: {
+          include: {
+            user: true,
+          },
+        },
         tags: {
           include: {
             tag: true,
@@ -148,83 +164,146 @@ export class ProjectService {
         },
       },
     });
+
+    // Notify admins about new project submission
+    if (projectWithMember && projectWithMember.member) {
+      await notifyNewProjectSubmission({
+        id: projectWithMember.id,
+        title: projectWithMember.title,
+        description: projectWithMember.description || undefined,
+        category: projectWithMember.category || undefined,
+        member: {
+          fullName: projectWithMember.member.fullName || undefined,
+          user: {
+            username: projectWithMember.member.user.username,
+            email: projectWithMember.member.user.email || "",
+          },
+        },
+      });
+    }
+
+    return projectWithMember!;
   }
 
-static async update(id: number, data: UpdateProjectDTO): Promise<Project> {
-  const { tags: tagNames, ...projectData } = data;
-  
-  // First, get the current project to handle tag updates properly
-  const currentProject = await prisma.project.findUnique({
-    where: { id },
-    include: { tags: { include: { tag: true } } }
-  });
+  static async update(id: number, data: UpdateProjectDTO): Promise<Project> {
+    const { tags: tagNames, ...projectData } = data;
 
-  let tagsUpdate: any = {};
+    // Get the existing project to check if it was previously approved
+    const existingProject = await prisma.project.findUnique({
+      where: { id },
+      include: {
+        member: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
 
-  if (tagNames !== undefined) {
+    if (!existingProject) {
+      throw new Error(`Project with ID ${id} not found`);
+    }
+
+    const wasApproved = existingProject.isApproved;
+
     // Delete all existing project tags
     await prisma.projectTag.deleteMany({
-      where: { projectId: id }
+      where: { projectId: id },
     });
 
     // Create new project tags for each tag name
-    if (tagNames.length > 0) {
+    if (tagNames && tagNames.length > 0) {
       const tagOperations = [];
-      
+
       for (const tagNameWithHash of tagNames) {
-        const tagName = tagNameWithHash.startsWith('#')
+        const tagName = tagNameWithHash.startsWith("#")
           ? tagNameWithHash.substring(1)
           : tagNameWithHash;
-        
-        // Find or create the tag
+
         const tag = await prisma.tag.upsert({
           where: { name: tagName },
           update: {},
-          create: { name: tagName }
+          create: { name: tagName },
         });
-        
-        // Create the project tag relation
+
         tagOperations.push(
           prisma.projectTag.create({
             data: {
               projectId: id,
-              tagId: tag.id
-            }
+              tagId: tag.id,
+            },
           })
         );
       }
-      
+
       await Promise.all(tagOperations);
     }
-  }
 
-  // Update the project itself
-  return prisma.project.update({
-    where: { id },
-    data: {
-      ...projectData,
-      isApproved: false,
-    },
-    include: {
-      tags: {
-        include: {
-          tag: true,
+    // Update the project itself
+    const updatedProject = await prisma.project.update({
+      where: { id },
+      data: {
+        ...projectData,
+        isApproved: false, // Reset approval status when project is updated
+      },
+      include: {
+        member: {
+          include: {
+            user: true,
+          },
+        },
+        tags: {
+          include: {
+            tag: true,
+          },
         },
       },
-    },
-  });
-}
-  /**
-   * Updates the approval status of a project.
-   * To set a project back to "not approved" (pending), call this with isApproved: false.
-   * To approve a project, call this with isApproved: true.
-   */
+    });
 
+    // Notify admins about project update for re-approval
+    if (updatedProject.member) {
+      await notifyNewProjectSubmission({
+        id: updatedProject.id,
+        title: updatedProject.title,
+        description: updatedProject.description || undefined,
+        category: updatedProject.category || undefined,
+        member: {
+          fullName: updatedProject.member.fullName || undefined,
+          user: {
+            username: updatedProject.member.user.username,
+            email: updatedProject.member.user.email || "",
+          },
+        },
+      });
+    }
+
+    return updatedProject;
+  }
+
+  /**
+   * Update project approval status and send notifications
+   */
   static async updateApprovalStatus(
     id: number,
-    isApproved: boolean
+    isApproved: boolean,
+    reason?: string
   ): Promise<Project> {
-    return prisma.project.update({
+    const existingProject = await prisma.project.findUnique({
+      where: { id },
+      include: {
+        member: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    });
+
+    if (!existingProject) {
+      throw new Error(`Project with ID ${id} not found`);
+    }
+
+    const updatedProject = await prisma.project.update({
       where: { id },
       data: { isApproved },
       include: {
@@ -240,6 +319,44 @@ static async update(id: number, data: UpdateProjectDTO): Promise<Project> {
         },
       },
     });
+
+    // Send appropriate notification based on approval status
+    if (isApproved && updatedProject.member) {
+      await notifyProjectApproved({
+        id: updatedProject.id,
+        title: updatedProject.title,
+        member: {
+          fullName: updatedProject.member.fullName || undefined,
+          user: {
+            username: updatedProject.member.user.username,
+            email: updatedProject.member.user.email || "",
+          },
+        },
+      });
+    } else if (
+      !isApproved &&
+      existingProject.isApproved &&
+      updatedProject.member
+    ) {
+      // Only notify about rejection if project was previously approved
+      // (to avoid notifying about initial submission rejection)
+      await notifyProjectRejected(
+        {
+          id: updatedProject.id,
+          title: updatedProject.title,
+          member: {
+            fullName: updatedProject.member.fullName || undefined,
+            user: {
+              username: updatedProject.member.user.username,
+              email: updatedProject.member.user.email || "",
+            },
+          },
+        },
+        reason
+      );
+    }
+
+    return updatedProject;
   }
 
   static async delete(id: number) {

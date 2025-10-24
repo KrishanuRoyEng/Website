@@ -59,13 +59,10 @@ export async function notifyNewUserSignup(user: {
           },
         }),
       }
-      // Optional: Mention admin role - replace with your actual role ID
-      // `<@&YOUR_ADMIN_ROLE_ID>`
     );
 
     // Send email to admins
     if (user.email) {
-      // Only send email if an email address exists
       await sendEmail({
         to: NOTIFICATION_CONFIG.email.adminEmail,
         subject: "🎉 New User Signup - Action Required",
@@ -77,7 +74,7 @@ export async function notifyNewUserSignup(user: {
         }),
       });
     } else {
-      logger.warn("Skipping admin email: New user has no email.", {
+      logger.warn("Skipping admin email: New user has no email", {
         userId: user.id,
       });
     }
@@ -105,7 +102,7 @@ export async function notifyUserApproved(user: {
   try {
     logger.info("Sending user approval notifications", { userId: user.id });
 
-    // Send Discord notification to announcement channel
+    // Send Discord notification
     await sendDiscordNotification(NOTIFICATION_CONFIG.discord.approvals, {
       title: "✅ User Approved",
       description: `${user.username} has been approved and can now access the platform`,
@@ -125,10 +122,11 @@ export async function notifyUserApproved(user: {
       timestamp: new Date().toISOString(),
     });
 
-    // GUARD CLAUSE: Do not proceed if user has no email, as we need it for email notification
+    // GUARD CLASE - Do not proceed if user has no email
     if (!user.email) {
-      logger.warn("Skipping rejection notifications: User has no email.", {
+      logger.warn("Skipping approval email: User has no email", {
         userId: user.id,
+        username: user.username,
       });
       return;
     }

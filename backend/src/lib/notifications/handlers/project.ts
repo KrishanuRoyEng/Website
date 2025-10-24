@@ -70,9 +70,7 @@ export async function notifyNewProjectSubmission(project: {
         footer: {
           text: 'Go to Admin Dashboard to review',
         },
-      },
-      // Optional: Mention admin role
-      // `<@&YOUR_ADMIN_ROLE_ID>`
+      }
     );
 
     // Send email to admins
