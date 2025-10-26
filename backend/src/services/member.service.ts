@@ -1,6 +1,6 @@
 import prisma from '../config/database';
 import { CreateMemberDTO, UpdateMemberDTO, MemberQuery } from '../types';
-import { Member, UserRole } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 
 export class MemberService {
   static async findById(id: number) {
@@ -34,6 +34,15 @@ export class MemberService {
         skills: {
           include: {
             skill: true,
+          },
+        },
+        projects: {
+          include: {
+            tags: {
+              include: {
+                tag: true,
+              },
+            },
           },
         },
       },
@@ -101,7 +110,7 @@ export class MemberService {
     });
   }
 
-  static async create(data: CreateMemberDTO): Promise<Member> {
+  static async create(data: CreateMemberDTO) {
     return prisma.member.create({
       data,
       include: {
@@ -110,7 +119,7 @@ export class MemberService {
     });
   }
 
-  static async update(id: number, data: UpdateMemberDTO): Promise<Member> {
+  static async update(id: number, data: UpdateMemberDTO) {
     return prisma.member.update({
       where: { id },
       data,
@@ -119,6 +128,15 @@ export class MemberService {
         skills: {
           include: {
             skill: true,
+          },
+        },
+        projects: {
+          include: {
+            tags: {
+              include: {
+                tag: true,
+              },
+            },
           },
         },
       },

@@ -1,6 +1,6 @@
 import prisma from "../config/database";
 import { CreateProjectDTO, UpdateProjectDTO, ProjectQuery } from "../types";
-import { Project, ProjectCategory } from "@prisma/client";
+import { ProjectCategory } from "@prisma/client";
 import {
   notifyNewProjectSubmission,
   notifyProjectApproved,
@@ -105,16 +105,14 @@ export class ProjectService {
     });
   }
 
-  static async create(
-    memberId: number,
-    data: CreateProjectDTO
-  ): Promise<Project> {
+  static async create(memberId: number, data: CreateProjectDTO) {
     const { tags: tagNames, ...projectData } = data;
 
     // Create the project first
     const project = await prisma.project.create({
       data: {
         isApproved: false,
+        isRejected: false, // Default to false
         ...projectData,
         memberId,
       },
@@ -182,10 +180,10 @@ export class ProjectService {
       });
     }
 
-    return projectWithMember!;
+    return projectWithMember;
   }
 
-  static async update(id: number, data: UpdateProjectDTO): Promise<Project> {
+  static async update(id: number, data: UpdateProjectDTO) {
     const { tags: tagNames, ...projectData } = data;
 
     // Get the existing project to check if it was previously approved
@@ -203,8 +201,6 @@ export class ProjectService {
     if (!existingProject) {
       throw new Error(`Project with ID ${id} not found`);
     }
-
-    const wasApproved = existingProject.isApproved;
 
     // Delete all existing project tags
     await prisma.projectTag.deleteMany({
@@ -239,12 +235,14 @@ export class ProjectService {
       await Promise.all(tagOperations);
     }
 
-    // Update the project itself
+    // Update the project itself - reset approval status when updated
     const updatedProject = await prisma.project.update({
       where: { id },
       data: {
         ...projectData,
-        isApproved: false, // Reset approval status when project is updated
+        isApproved: false,
+        isRejected: false, // Reset rejection status when project is updated
+        rejectionReason: null, // Clear rejection reason
       },
       include: {
         member: {
@@ -280,23 +278,13 @@ export class ProjectService {
     return updatedProject;
   }
 
-  /**
-   * Update project approval status and send notifications
-   */
   static async updateApprovalStatus(
     id: number,
     isApproved: boolean,
     reason?: string
-  ): Promise<Project> {
+  ) {
     const existingProject = await prisma.project.findUnique({
       where: { id },
-      include: {
-        member: {
-          include: {
-            user: true,
-          },
-        },
-      },
     });
 
     if (!existingProject) {
@@ -305,7 +293,11 @@ export class ProjectService {
 
     const updatedProject = await prisma.project.update({
       where: { id },
-      data: { isApproved },
+      data: {
+        isApproved,
+        isRejected: !isApproved && !!reason, // Only mark as rejected if not approved AND has a reason
+        rejectionReason: !isApproved ? reason : null,
+      },
       include: {
         member: {
           include: {
@@ -333,13 +325,8 @@ export class ProjectService {
           },
         },
       });
-    } else if (
-      !isApproved &&
-      existingProject.isApproved &&
-      updatedProject.member
-    ) {
-      // Only notify about rejection if project was previously approved
-      // (to avoid notifying about initial submission rejection)
+    } else if (!isApproved && updatedProject.member) {
+      // Send rejection notification with reason
       await notifyProjectRejected(
         {
           id: updatedProject.id,
@@ -359,16 +346,11 @@ export class ProjectService {
     return updatedProject;
   }
 
-  static async delete(id: number) {
-    return prisma.project.delete({
-      where: { id },
-    });
-  }
-
   static async getPendingProjects() {
     return prisma.project.findMany({
       where: {
         isApproved: false,
+        isRejected: false, // Only get projects that are pending (not approved and not rejected)
       },
       include: {
         member: {
@@ -385,6 +367,39 @@ export class ProjectService {
       orderBy: {
         createdAt: "desc",
       },
+    });
+  }
+
+  static async getProjectsWithFilter(includeRejected: boolean = false) {
+    const where: any = {};
+
+    if (!includeRejected) {
+      where.isRejected = false;
+    }
+
+    return prisma.project.findMany({
+      where,
+      include: {
+        member: {
+          include: {
+            user: true,
+          },
+        },
+        tags: {
+          include: {
+            tag: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+  }
+
+  static async delete(id: number) {
+    return prisma.project.delete({
+      where: { id },
     });
   }
 }

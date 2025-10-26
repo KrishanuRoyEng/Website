@@ -1,32 +1,63 @@
-import Layout from '@/components/Layout';
-import ProjectCard from '@/components/ProjectCard';
-import { memberApi, projectApi } from '@/lib/api';
-import { Member, Project } from '@/lib/types';
-import { useRouter } from 'next/router';
-import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
-import { Github, Linkedin, ExternalLink, Edit2 } from 'lucide-react';
-import Link from 'next/link';
+import Layout from "@/components/Layout";
+
+import ProfileProjectsSection from "@/components/EditProfile/ProfileProjectSection";
+import { memberApi, projectApi } from "@/lib/api";
+import { Member, Project } from "@/lib/types";
+import { useRouter } from "next/router";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { Github, Linkedin, ExternalLink, Edit2 } from "lucide-react";
+import Link from "next/link";
 
 export default function ProfilePage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [member, setMember] = useState<Member | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const currentUserId = (session?.user as any)?.id;
+  const isOwnProfile = status === "authenticated";
 
-  const isOwnProfile = status === 'authenticated'; 
-  const isMember = session && (session.user as any).role !== 'PENDING';
+  //Debug
+  useEffect(() => {
+    if (member && member.projects) {
+      console.log("=== PROFILE PROJECTS DEBUG ===");
+      console.log("All projects:", member.projects);
+      console.log(
+        "Projects with rejectionReason:",
+        member.projects.filter((p) => p.rejectionReason)
+      );
+      console.log(
+        "Projects with isRejected true:",
+        member.projects.filter((p) => p.isRejected === true)
+      );
+      console.log(
+        "Projects with isRejected false:",
+        member.projects.filter((p) => p.isRejected === false)
+      );
+      console.log(
+        "Projects with isRejected undefined:",
+        member.projects.filter((p) => p.isRejected === undefined)
+      );
+
+      // Check the actual structure of one rejected project
+      const rejectedProject = member.projects.find((p) => p.rejectionReason);
+      if (rejectedProject) {
+        console.log("Sample rejected project structure:", rejectedProject);
+        console.log("Has isRejected field?", "isRejected" in rejectedProject);
+        console.log("isRejected value:", rejectedProject.isRejected);
+      }
+      console.log("=== END DEBUG ===");
+    }
+  }, [member]);
 
   useEffect(() => {
-    if (status !== 'authenticated' || !currentUserId) {
-      if (status !== 'loading') {
+    if (status !== "authenticated" || !currentUserId) {
+      if (status !== "loading") {
         setLoading(false);
       }
-      return; 
+      return;
     }
 
     const loadMember = async () => {
@@ -34,8 +65,12 @@ export default function ProfilePage() {
         const res = await memberApi.getProfile();
         setMember(res.data);
       } catch (error: any) {
-        console.error('Error loading member:', error);
-        setError(error.response?.data?.error || error.message || 'Failed to load profile');
+        console.error("Error loading member:", error);
+        setError(
+          error.response?.data?.error ||
+            error.message ||
+            "Failed to load profile"
+        );
       } finally {
         setLoading(false);
       }
@@ -44,7 +79,11 @@ export default function ProfilePage() {
     loadMember();
   }, [status]);
 
-  if (loading || status === 'loading') {
+  const handleProjectsUpdate = (updatedProjects: Project[]) => {
+    setMember((prev) => (prev ? { ...prev, projects: updatedProjects } : null));
+  };
+
+  if (loading || status === "loading") {
     return (
       <Layout>
         <div className="container-custom py-20 text-center">
@@ -54,17 +93,17 @@ export default function ProfilePage() {
     );
   }
 
-  if (error || (!member && status === 'authenticated')) {
+  if (error || (!member && status === "authenticated")) {
     return (
       <Layout>
         <div className="container-custom py-20 text-center">
           <p className="text-slate-400">Profile not found</p>
-          {error && (
-            <p className="text-red-400 text-sm mt-2">Error: {error}</p>
-          )}
-          <p className="text-slate-500 text-xs mt-2">Session ID: {(session?.user as any)?.id}</p>
+          {error && <p className="text-red-400 text-sm mt-2">Error: {error}</p>}
+          <p className="text-slate-500 text-xs mt-2">
+            Session ID: {(session?.user as any)?.id}
+          </p>
           <button
-            onClick={() => router.push('/members')}
+            onClick={() => router.push("/members")}
             className="btn-primary mt-6"
           >
             View All Members
@@ -86,12 +125,12 @@ export default function ProfilePage() {
             <div className="flex flex-col md:flex-row items-center md:items-start gap-4 w-full md:w-auto">
               <div className="flex-shrink-0">
                 <img
-                  src={member.user.avatarUrl || '/avatar.png'}
+                  src={member.user.avatarUrl || "/avatar.png"}
                   alt={member.fullName}
                   className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-primary/50 shadow-lg"
                 />
               </div>
-              
+
               {/* Mobile Edit Button */}
               {isOwnProfile && (
                 <div className="md:hidden w-full">
@@ -112,7 +151,7 @@ export default function ProfilePage() {
                   <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white text-center md:text-left">
                     {member.fullName || member.user.username}
                   </h1>
-                  
+
                   {member.roleTitle && (
                     <p className="text-base md:text-lg text-primary mt-1 text-center md:text-left">
                       {member.roleTitle}
@@ -153,8 +192,11 @@ export default function ProfilePage() {
                     Dev Stack
                   </h3>
                   <div className="flex flex-wrap gap-2 justify-center md:justify-start">
-                    {member.devStack.split(',').map((stack) => (
-                      <span key={stack.trim()} className="badge-primary text-xs">
+                    {member.devStack.split(",").map((stack) => (
+                      <span
+                        key={stack.trim()}
+                        className="badge-primary text-xs"
+                      >
                         {stack.trim()}
                       </span>
                     ))}
@@ -170,7 +212,10 @@ export default function ProfilePage() {
                   </h3>
                   <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                     {member.skills.map((memberSkill) => (
-                      <span key={memberSkill.skill.id} className="badge-secondary text-xs">
+                      <span
+                        key={memberSkill.skill.id}
+                        className="badge-secondary text-xs"
+                      >
                         {memberSkill.skill.name}
                       </span>
                     ))}
@@ -219,25 +264,13 @@ export default function ProfilePage() {
         </div>
       </section>
 
-      {/* Projects Section */}
-      <section className="container-custom py-12 md:py-20">
-        <h2 className="section-title mb-2 text-center md:text-left">Projects</h2>
-        <p className="section-subtitle mb-8 text-center md:text-left">
-          Check out {member.fullName || member.user.username}&apos;s amazing work
-        </p>
-
-        {member.projects && member.projects.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {member.projects.map((project) => (
-              <ProjectCard key={project.id} project={project} />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <p className="text-slate-400">No projects yet</p>
-          </div>
-        )}
-      </section>
+      {/* Projects Section with Integrated Management */}
+      <ProfileProjectsSection
+        projects={member.projects || []}
+        isOwnProfile={isOwnProfile}
+        onProjectsUpdate={handleProjectsUpdate}
+        memberName={member.fullName || member.user.username}
+      />
     </Layout>
   );
 }

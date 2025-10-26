@@ -6,7 +6,6 @@ import skillRoutes from './skill.routes';
 import tagRoutes from './tag.routes';
 import eventRoutes from './event.routes';
 import adminRoutes from './admin.routes';
-import testRoutes from './test.routes';
 
 const router = Router();
 
@@ -17,6 +16,5 @@ router.use('/skills', skillRoutes);
 router.use('/tags', tagRoutes);
 router.use('/events', eventRoutes);
 router.use('/admin', adminRoutes);
-router.use('/test', testRoutes);
 
 export default router;

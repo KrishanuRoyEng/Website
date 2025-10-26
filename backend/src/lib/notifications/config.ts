@@ -11,6 +11,7 @@ export const NOTIFICATION_CONFIG = {
     approvals: process.env.DISCORD_WEBHOOK_APPROVALS,
     newProjects: process.env.DISCORD_WEBHOOK_NEW_PROJECTS,
     projectApprovals: process.env.DISCORD_WEBHOOK_PROJECT_APPROVALS,
+    projectRejections: process.env.DISCORD_WEBHOOK_PROJECT_REJECTIONS,
     errors: process.env.DISCORD_WEBHOOK_ERRORS,
   },
 
