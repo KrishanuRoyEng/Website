@@ -1,9 +1,9 @@
-import NextAuth, { type NextAuthOptions, type User } from 'next-auth';
-import GithubProvider from 'next-auth/providers/github';
-import type { JWT } from 'next-auth/jwt';
-import type { Session } from 'next-auth';
+import NextAuth, { type NextAuthOptions, type User } from "next-auth";
+import GithubProvider from "next-auth/providers/github";
+import type { JWT } from "next-auth/jwt";
+import type { Session } from "next-auth";
 
-declare module 'next-auth' {
+declare module "next-auth" {
   interface User {
     id?: number;
     role?: string;
@@ -22,7 +22,7 @@ declare module 'next-auth' {
   }
 }
 
-declare module 'next-auth/jwt' {
+declare module "next-auth/jwt" {
   interface JWT {
     id?: number;
     role?: string;
@@ -42,22 +42,31 @@ interface GithubProfile {
 export const authOptions: NextAuthOptions = {
   providers: [
     GithubProvider({
-      clientId: process.env.GITHUB_ID || '',
-      clientSecret: process.env.GITHUB_SECRET || '',
+      clientId: process.env.GITHUB_ID || "",
+      clientSecret: process.env.GITHUB_SECRET || "",
     }),
   ],
   pages: {
-    signIn: '/auth/signin',
+    signIn: "/auth/signin",
   },
   callbacks: {
+    
+    async redirect({ url, baseUrl }) {
+      // Allows relative callback URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // Allows callback URLs on the same origin
+      else if (new URL(url).origin === baseUrl) return url;
+      return baseUrl;
+    },
+
     async signIn({ user, account, profile: rawProfile }) {
-      if (account?.provider === 'github' && rawProfile) {
+      if (account?.provider === "github" && rawProfile) {
         try {
           const profile = rawProfile as unknown as GithubProfile;
 
           // Set basic user info from GitHub first
           user.id = profile.id;
-          user.role = 'PENDING'; // Default role
+          user.role = "PENDING"; // Default role
           try {
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
@@ -65,8 +74,8 @@ export const authOptions: NextAuthOptions = {
             const response = await fetch(
               `${process.env.NEXT_PUBLIC_API_URL}/auth/github`,
               {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   githubId: String(profile.id),
                   username: profile.login,
@@ -86,15 +95,18 @@ export const authOptions: NextAuthOptions = {
               user.role = userData.role;
               user.accessToken = userData.token;
             } else {
-              console.warn('Backend auth endpoint returned error:', response.status);
+              console.warn(
+                "Backend auth endpoint returned error:",
+                response.status
+              );
               // Continue with basic GitHub data
             }
           } catch (backendError) {
-            console.warn('Backend unavailable during sign-in:', backendError);
+            console.warn("Backend unavailable during sign-in:", backendError);
             // Continue with basic GitHub data - don't fail authentication
           }
         } catch (error) {
-          console.error('Unexpected error during sign in:', error);
+          console.error("Unexpected error during sign in:", error);
           return false;
         }
       }
@@ -104,8 +116,9 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       // Initial sign in
       if (user && account) {
-        token.id = typeof user.id === 'string' ? parseInt(user.id, 10) : user.id;
-        token.role = user.role || 'PENDING';
+        token.id =
+          typeof user.id === "string" ? parseInt(user.id, 10) : user.id;
+        token.role = user.role || "PENDING";
         token.accessToken = user.accessToken;
       }
       return token;
@@ -123,7 +136,7 @@ export const authOptions: NextAuthOptions = {
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === 'development', // Enable debug mode
+  debug: process.env.NODE_ENV === "development", // Enable debug mode
 };
 
 export default NextAuth(authOptions);

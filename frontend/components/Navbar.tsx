@@ -8,6 +8,11 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
   const isAdmin = (session?.user as any)?.role === "ADMIN";
+
+  const handleSignIn = () => {
+    signIn("github", { callbackUrl: "/" });
+  };
+  
   const handleSignOut = () => {
     signOut({ callbackUrl: "/" });
   };
@@ -82,7 +87,7 @@ export default function Navbar() {
               </div>
             ) : (
               <button
-                onClick={() => signIn("github")}
+                onClick={handleSignIn}
                 className="btn-primary flex items-center gap-2 whitespace-nowrap"
               >
                 <LogIn size={16} />
@@ -173,7 +178,7 @@ export default function Navbar() {
             ) : (
               <button
                 onClick={() => {
-                  signIn("github");
+                  handleSignIn();
                   setIsOpen(false);
                 }}
                 className="btn-primary w-full flex items-center justify-center gap-2 py-3"
