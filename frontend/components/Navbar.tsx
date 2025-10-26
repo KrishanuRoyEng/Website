@@ -87,7 +87,7 @@ export default function Navbar() {
               </div>
             ) : (
               <button
-                onClick={handleSignIn} // Updated here
+                onClick={handleSignIn}
                 className="btn-primary flex items-center gap-2 whitespace-nowrap"
               >
                 <LogIn size={16} />
@@ -178,7 +178,7 @@ export default function Navbar() {
             ) : (
               <button
                 onClick={() => {
-                  handleSignIn(); // Updated here
+                  handleSignIn();
                   setIsOpen(false);
                 }}
                 className="btn-primary w-full flex items-center justify-center gap-2 py-3"
