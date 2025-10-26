@@ -111,6 +111,125 @@ export interface MemberApprovalDTO {
 
 export interface ProjectApprovalDTO {
   isApproved: boolean;
+  reason?: string;
+}
+
+// Core entity interfaces
+export interface User {
+  id: number;
+  githubId: string;
+  username: string;
+  email?: string | null;
+  avatarUrl?: string | null;
+  githubUrl?: string | null;
+  role: UserRole;
+  isActive: boolean;
+  isLead: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Member {
+  id: number;
+  userId: number;
+  fullName?: string | null;
+  bio?: string | null;
+  roleTitle?: string | null;
+  devStack?: string | null;
+  linkedinUrl?: string | null;
+  portfolioUrl?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Skill {
+  id: number;
+  name: string;
+  category?: string | null;
+}
+
+export interface MemberSkill {
+  memberId: number;
+  skillId: number;
+  member: Member;
+  skill: Skill;
+}
+
+export interface Tag {
+  id: number;
+  name: string;
+}
+
+export interface ProjectTag {
+  projectId: number;
+  tagId: number;
+  project: Project;
+  tag: Tag;
+}
+
+export interface Project {
+  id: number;
+  memberId: number;
+  title: string;
+  description?: string | null;
+  githubUrl?: string | null;
+  liveUrl?: string | null;
+  imageUrl?: string | null;
+  category?: ProjectCategory | null;
+  isApproved: boolean;
+  isRejected: boolean;
+  rejectionReason?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Event {
+  id: number;
+  title: string;
+  description?: string | null;
+  eventDate: Date;
+  location?: string | null;
+  imageUrl?: string | null;
+  registrationUrl?: string | null;
+  isFeatured: boolean;
+  isUpcoming: boolean;
+  createdBy?: number | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Extended interfaces with relations
+export interface ProjectWithRelations extends Project {
+  tags: {
+    tag: {
+      id: number;
+      name: string;
+    };
+  }[];
+  member?: Member & {
+    user: User;
+  };
+}
+
+export interface MemberWithRelations extends Member {
+  user: User;
+  skills: (MemberSkill & {
+    skill: Skill;
+  })[];
+  projects: (Project & {
+    tags: (ProjectTag & {
+      tag: Tag;
+    })[];
+  })[];
+}
+
+export interface UserWithMember extends User {
+  member?: MemberWithRelations;
+}
+
+// Legacy interfaces (can be removed if not used)
+export interface ProjectWithRejection extends Project {
+  rejectionReason?: string;
 }
 
 export interface EventFeaturedDTO {
@@ -122,6 +241,7 @@ export interface JWTPayload {
   role: string;
 }
 
+// Query interfaces
 export interface PaginationQuery {
   skip?: number;
   limit?: number;

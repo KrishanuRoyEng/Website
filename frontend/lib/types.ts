@@ -1,5 +1,5 @@
-export type UserRole = 'ADMIN' | 'MEMBER' | 'PENDING';
-export type ProjectCategory = 'WEB' | 'AI' | 'UIUX';
+export type UserRole = "ADMIN" | "MEMBER" | "PENDING";
+export type ProjectCategory = "WEB" | "AI" | "UIUX";
 
 export interface User {
   id: number;
@@ -54,6 +54,8 @@ export interface Project {
   imageUrl?: string;
   category?: ProjectCategory;
   isApproved: boolean;
+  isRejected: boolean;
+  rejectionReason?: string;
   tags: ProjectTag[];
   createdAt: string;
   updatedAt: string;
@@ -93,10 +95,11 @@ export interface ProjectUI extends Omit<Project, "tags"> {
 
 export const toProjectUI = (p: Project): ProjectUI => ({
   ...p,
-  tags: p.tags.map((t) => (typeof t === "string" ? t : t.tag.name)), // Updated to handle ProjectTag structure
+  tags: p.tags.map((t) => (typeof t === "string" ? t : t.tag.name)),
 });
 
 export interface ProjectWithRelations extends Project {
   member: Member;
   tags: ProjectTag[];
 }
+

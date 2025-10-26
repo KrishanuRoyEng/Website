@@ -1,14 +1,13 @@
 import Layout from "@/components/Layout";
-import { memberApi, projectApi, skillApi } from "@/lib/api";
+import { memberApi, skillApi } from "@/lib/api";
 import { Member, Skill } from "@/lib/types";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { useEffect, useState, useCallback } from "react";
-import { User, FolderOpen, Pencil, X, Save, CheckCircle } from "lucide-react";
+import { User, Pencil, X, CheckCircle } from "lucide-react";
 import Link from "next/link";
 
 import ProfileInfoForm from "../../../components/EditProfile/ProfileInfoForm";
-import ProjectManager from "../../../components/EditProfile/ProjectManager";
 
 // --- Shared State Interfaces ---
 interface ProfileFormData {
@@ -32,12 +31,7 @@ export default function EditProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<"profile" | "projects">(
-    "profile"
-  );
   const [searchSkill, setSearchSkill] = useState("");
-
-  const [projects, setProjects] = useState<any[]>([]);
 
   const [formData, setFormData] = useState<ProfileFormData>({
     fullName: "",
@@ -65,8 +59,6 @@ export default function EditProfilePage() {
 
         setMember(memberRes.data);
         setAllSkills(skillsRes.data);
-        setProjects(memberRes.data.projects || []);
-
         setFormData({
           fullName: memberRes.data.fullName || "",
           bio: memberRes.data.bio || "",
@@ -85,7 +77,7 @@ export default function EditProfilePage() {
     };
 
     loadData();
-  }, []);
+  }, [currentUserId, session]);
 
   // --- Profile Save Handler ---
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -179,7 +171,6 @@ export default function EditProfilePage() {
 
           <div className="flex items-start gap-6">
             <div className="relative group">
-              {/* NOTE: Avatar logic should be moved to a separate AvatarEditor component if file uploads are needed */}
               <img
                 src={member.user.avatarUrl || "/avatar.png"}
                 alt={member.fullName}
@@ -193,7 +184,7 @@ export default function EditProfilePage() {
                 <Pencil className="text-accent" size={28} />
               </h1>
               <p className="text-slate-400 text-lg">
-                Customize how you should be defined!
+                Update your personal information and skills
               </p>
             </div>
           </div>
@@ -217,44 +208,20 @@ export default function EditProfilePage() {
         )}
       </div>
 
-      {/* Tab Navigation */}
-      <div className="container-custom mt-8">
-        <div className="flex gap-2 bg-slate-800/50 p-2 rounded-xl border border-slate-700 backdrop-blur-sm inline-flex">
-          <button
-            onClick={() => {
-              setActiveSection("profile");
-              clearAlerts();
-            }}
-            className={`px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${
-              activeSection === "profile"
-                ? "bg-primary text-white shadow-lg shadow-primary/20"
-                : "text-slate-400 hover:text-white hover:bg-slate-700/50"
-            }`}
-          >
-            <User size={18} />
-            Profile Info
-          </button>
-          <button
-            onClick={() => {
-              setActiveSection("projects");
-              clearAlerts();
-            }}
-            className={`px-6 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${
-              activeSection === "projects"
-                ? "bg-primary text-white shadow-lg shadow-primary/20"
-                : "text-slate-400 hover:text-white hover:bg-slate-700/50"
-            }`}
-          >
-            <FolderOpen size={18} />
-            Projects ({projects.length})
-          </button>
-        </div>
-      </div>
-
       {/* Content */}
       <section className="container-custom py-12">
         <div className="max-w-4xl mx-auto">
-          {activeSection === "profile" && (
+          <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-primary/20 rounded-lg">
+                <User className="text-primary" size={24} />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-white">Profile Information</h2>
+                <p className="text-slate-400">Update your personal details and skills</p>
+              </div>
+            </div>
+
             <ProfileInfoForm
               formData={formData}
               setFormData={setFormData}
@@ -264,17 +231,7 @@ export default function EditProfilePage() {
               searchSkill={searchSkill}
               setSearchSkill={setSearchSkill}
             />
-          )}
-
-          {activeSection === "projects" && (
-            <ProjectManager
-              projects={projects}
-              setProjects={setProjects}
-              setError={setError}
-              setSuccess={setSuccess}
-              clearAlerts={clearAlerts}
-            />
-          )}
+          </div>
         </div>
       </section>
     </Layout>

@@ -89,6 +89,8 @@ model Project {
   imageUrl    String?         @map("image_url")
   category    ProjectCategory?
   isApproved  Boolean         @default(false) @map("is_approved")
+  isRejected  Boolean         @default(false) @map("is_rejected")
+  rejectionReason String?        @map("rejection_reason") @db.Text
   createdAt   DateTime        @default(now()) @map("created_at")
   updatedAt   DateTime        @updatedAt @map("updated_at")
 
