@@ -7,6 +7,15 @@ declare module "next-auth" {
   interface User {
     id?: number;
     role?: string;
+    customRole?: {
+      id: number;
+      name: string;
+      permissions: string[];
+      color: string;
+      description?: string;
+      createdAt: string;
+      updatedAt: string;
+    } | null;
     accessToken?: string;
   }
 
@@ -14,6 +23,15 @@ declare module "next-auth" {
     user?: {
       id?: number;
       role?: string;
+      customRole?: {
+        id: number;
+        name: string;
+        permissions: string[];
+        color: string;
+        description?: string;
+        createdAt: string;
+        updatedAt: string;
+      } | null;
       email?: string | null;
       name?: string | null;
       image?: string | null;
@@ -26,6 +44,15 @@ declare module "next-auth/jwt" {
   interface JWT {
     id?: number;
     role?: string;
+    customRole?: {
+      id: number;
+      name: string;
+      permissions: string[];
+      color: string;
+      description?: string;
+      createdAt: string;
+      updatedAt: string;
+    } | null;
     accessToken?: string;
   }
 }
@@ -39,6 +66,21 @@ interface GithubProfile {
   name: string | null;
 }
 
+interface BackendUserResponse {
+  id: number;
+  role: string;
+  customRole?: {
+    id: number;
+    name: string;
+    permissions: string[];
+    color: string;
+    description?: string;
+    createdAt: string;
+    updatedAt: string;
+  } | null;
+  token: string;
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     GithubProvider({
@@ -50,7 +92,6 @@ export const authOptions: NextAuthOptions = {
     signIn: "/auth/signin",
   },
   callbacks: {
-    
     async redirect({ url, baseUrl }) {
       // Allows relative callback URLs
       if (url.startsWith("/")) return `${baseUrl}${url}`;
@@ -90,9 +131,10 @@ export const authOptions: NextAuthOptions = {
             clearTimeout(timeoutId);
 
             if (response.ok) {
-              const userData = await response.json();
+              const userData: BackendUserResponse = await response.json();
               user.id = userData.id;
               user.role = userData.role;
+              user.customRole = userData.customRole || null; // Include customRole
               user.accessToken = userData.token;
             } else {
               console.warn(
@@ -119,6 +161,7 @@ export const authOptions: NextAuthOptions = {
         token.id =
           typeof user.id === "string" ? parseInt(user.id, 10) : user.id;
         token.role = user.role || "PENDING";
+        token.customRole = user.customRole || null; // Include customRole
         token.accessToken = user.accessToken;
       }
       return token;
@@ -128,6 +171,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
+        session.user.customRole = token.customRole || null; // Include customRole
       }
       if (token.accessToken) {
         session.accessToken = token.accessToken;

@@ -1,36 +1,64 @@
 import { Request, Response } from "express";
 import { UserService } from "../services/user.service";
+import { CustomRoleService } from "../services/customRole.service";
 import { ProjectService } from "../services/project.service";
 import { EventService } from "../services/event.service";
 import { UserRole } from "@prisma/client";
-import { asyncHandler } from "../utils/asyncHandler"; // Adjust import path as needed
+import { asyncHandler } from "../utils/asyncHandler";
 
 export class AdminController {
-  static getPendingMembers = asyncHandler(async (req: Request, res: Response) => {
-    const pendingMembers = await UserService.getPendingMembers();
-    return res.json(pendingMembers);
-  });
+  static getPendingMembers = asyncHandler(
+    async (req: Request, res: Response) => {
+      const pendingMembers = await UserService.getPendingMembers();
+      return res.json(pendingMembers);
+    }
+  );
 
   static approveMember = asyncHandler(async (req: Request, res: Response) => {
     const userId = parseInt(req.params.userId);
-    const { isActive, role } = req.body;
+    const { role, customRoleId, reason } = req.body;
 
-    if (typeof isActive !== "boolean" || !role) {
-      return res.status(400).json({ error: "isActive and role are required" });
+    if (!role) {
+      return res.status(400).json({ error: "Role is required" });
     }
 
     if (!Object.values(UserRole).includes(role)) {
       return res.status(400).json({ error: "Invalid role" });
     }
 
-    const user = await UserService.updateRole(userId, role, isActive);
+    // Validate custom role assignment
+    if (role === UserRole.MEMBER && customRoleId) {
+      const customRole = await CustomRoleService.findById(customRoleId);
+      if (!customRole) {
+        return res.status(400).json({ error: "Invalid custom role" });
+      }
+    }
+
+    const user = await UserService.updateRole(
+      userId,
+      role,
+      customRoleId,
+      reason
+    );
     return res.json(user);
   });
 
-  static getPendingProjects = asyncHandler(async (req: Request, res: Response) => {
-    const pendingProjects = await ProjectService.getPendingProjects();
-    return res.json(pendingProjects);
-  });
+  static assignCustomRole = asyncHandler(
+    async (req: Request, res: Response) => {
+      const userId = parseInt(req.params.userId);
+      const { customRoleId } = req.body;
+
+      const user = await UserService.assignCustomRole(userId, customRoleId);
+      return res.json(user);
+    }
+  );
+
+  static getPendingProjects = asyncHandler(
+    async (req: Request, res: Response) => {
+      const pendingProjects = await ProjectService.getPendingProjects();
+      return res.json(pendingProjects);
+    }
+  );
 
   static approveProject = asyncHandler(async (req: Request, res: Response) => {
     const projectId = parseInt(req.params.projectId);
@@ -40,7 +68,11 @@ export class AdminController {
       return res.status(400).json({ error: "isApproved is required" });
     }
 
-    const project = await ProjectService.updateApprovalStatus(projectId, isApproved, reason);
+    const project = await ProjectService.updateApprovalStatus(
+      projectId,
+      isApproved,
+      reason
+    );
     return res.json(project);
   });
 
@@ -50,17 +82,19 @@ export class AdminController {
     return res.json({ message: "Project removed successfully" });
   });
 
-  static setEventFeatured = asyncHandler(async (req: Request, res: Response) => {
-    const eventId = parseInt(req.params.eventId);
-    const { isFeatured } = req.body;
+  static setEventFeatured = asyncHandler(
+    async (req: Request, res: Response) => {
+      const eventId = parseInt(req.params.eventId);
+      const { isFeatured } = req.body;
 
-    if (typeof isFeatured !== "boolean") {
-      return res.status(400).json({ error: "isFeatured is required" });
+      if (typeof isFeatured !== "boolean") {
+        return res.status(400).json({ error: "isFeatured is required" });
+      }
+
+      const event = await EventService.setFeatured(eventId, isFeatured);
+      return res.json(event);
     }
-
-    const event = await EventService.setFeatured(eventId, isFeatured);
-    return res.json(event);
-  });
+  );
 
   static getAllUsers = asyncHandler(async (req: Request, res: Response) => {
     const skip = parseInt(req.query.skip as string) || 0;
@@ -71,19 +105,64 @@ export class AdminController {
 
   static updateUserRole = asyncHandler(async (req: Request, res: Response) => {
     const userId = parseInt(req.params.userId);
-    const { role, isActive, isLead } = req.body;
+    const { role, customRoleId, reason } = req.body;
 
     const user = await UserService.findById(userId);
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const updates: any = {};
-    if (role !== undefined) updates.role = role;
-    if (isActive !== undefined) updates.isActive = isActive;
-    if (isLead !== undefined) updates.isLead = isLead;
+    // Validate role
+    if (!role || !Object.values(UserRole).includes(role)) {
+      return res.status(400).json({ error: "Valid role is required" });
+    }
 
-    const updated = await UserService.update(userId, updates);
+    // Validate custom role assignment
+    if (role === UserRole.MEMBER && customRoleId) {
+      const customRole = await CustomRoleService.findById(customRoleId);
+      if (!customRole) {
+        return res.status(400).json({ error: "Invalid custom role" });
+      }
+    }
+
+    // Clear custom role if not a MEMBER
+    const finalCustomRoleId = role === UserRole.MEMBER ? customRoleId : null;
+
+    // Require reason for suspension
+    if (role === UserRole.SUSPENDED && !reason) {
+      return res.status(400).json({ error: "Suspension reason is required" });
+    }
+
+    const updated = await UserService.updateRole(
+      userId,
+      role,
+      finalCustomRoleId,
+      reason
+    );
     return res.json(updated);
   });
+  static async setUserLeadStatus(req: Request, res: Response) {
+    try {
+      const userId = parseInt(req.params.userId);
+      const { isLead } = req.body;
+
+      if (typeof isLead !== "boolean") {
+        return res.status(400).json({ error: "isLead must be a boolean" });
+      }
+
+      const user = await UserService.update(userId, { isLead });
+      return res.json(user);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  static async getLeads(req: Request, res: Response) {
+    try {
+      const leads = await UserService.getLeads();
+      return res.json(leads);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
 }

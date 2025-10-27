@@ -55,11 +55,6 @@ export class MemberController {
     return res.json(memberWithProjects);
   });
 
-  static getLeads = asyncHandler(async (req: Request, res: Response) => {
-    const leads = await MemberService.getLeads();
-    return res.json(leads);
-  });
-
   static updateProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Not authenticated' });
