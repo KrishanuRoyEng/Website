@@ -72,6 +72,15 @@ body::-webkit-scrollbar-thumb:hover {
   background-color: rgba(79, 70, 229, 0.9);
 }
 
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
 /* Optional fade-out smoothness */
 @media (prefers-reduced-motion: no-preference) {
   html, body {

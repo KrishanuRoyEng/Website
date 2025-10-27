@@ -10,6 +10,7 @@ export {
   // User notifications
   notifyNewUserSignup,
   notifyUserApproved,
+  notifyUserRejected,
 } from './handlers/user';
 
 export {

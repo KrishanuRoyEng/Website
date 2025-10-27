@@ -1,15 +1,18 @@
 import prisma from "../config/database";
-import { CreateUserDTO, UpdateUserDTO } from "../types";
-import { User, UserRole } from "@prisma/client";
+import { CreateUserDTO, UpdateUserDTO, UserWithRelations } from "../types";
+import { UserRole } from "@prisma/client";
 import logger from "../utils/logger";
 import {
   notifyNewUserSignup,
   notifyUserApproved,
+  notifyUserRejected,
 } from "../lib/notifications/index";
 
 export class UserService {
-  static async findByGithubId(githubId: string): Promise<User | null> {
-    return prisma.user.findUnique({
+  static async findByGithubId(
+    githubId: string
+  ): Promise<UserWithRelations | null> {
+    const user = await prisma.user.findUnique({
       where: { githubId },
       include: {
         member: {
@@ -19,14 +22,26 @@ export class UserService {
                 skill: true,
               },
             },
+            projects: {
+              include: {
+                tags: {
+                  include: {
+                    tag: true,
+                  },
+                },
+              },
+            },
           },
         },
+        customRole: true,
       },
     });
+
+    return user as unknown as UserWithRelations | null;
   }
 
-  static async findById(id: number): Promise<User | null> {
-    return prisma.user.findUnique({
+  static async findById(id: number): Promise<UserWithRelations | null> {
+    const user = await prisma.user.findUnique({
       where: { id },
       include: {
         member: {
@@ -36,15 +51,48 @@ export class UserService {
                 skill: true,
               },
             },
+            projects: {
+              include: {
+                tags: {
+                  include: {
+                    tag: true,
+                  },
+                },
+              },
+            },
           },
         },
+        customRole: true,
       },
     });
+
+    return user as unknown as UserWithRelations | null;
   }
 
-  static async create(data: CreateUserDTO): Promise<User> {
+  static async create(data: CreateUserDTO): Promise<UserWithRelations> {
     const user = await prisma.user.create({
       data,
+      include: {
+        member: {
+          include: {
+            skills: {
+              include: {
+                skill: true,
+              },
+            },
+            projects: {
+              include: {
+                tags: {
+                  include: {
+                    tag: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        customRole: true,
+      },
     });
 
     // Notify admins about new user signup
@@ -56,25 +104,48 @@ export class UserService {
       createdAt: user.createdAt,
     });
 
-    return user;
+    return user as unknown as UserWithRelations;
   }
 
-  static async update(id: number, data: UpdateUserDTO): Promise<User> {
-    return prisma.user.update({
+  static async update(id: number, data: any): Promise<UserWithRelations> {
+    const user = await prisma.user.update({
       where: { id },
       data,
+      include: {
+        member: {
+          include: {
+            skills: {
+              include: {
+                skill: true,
+              },
+            },
+            projects: {
+              include: {
+                tags: {
+                  include: {
+                    tag: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        customRole: true,
+      },
     });
+
+    return user as unknown as UserWithRelations;
   }
 
   /**
    * Update user role and status, triggering approval notifications if relevant
    */
-  static async updateRole(
+static async updateRole(
     id: number,
     role: UserRole,
-    isActive: boolean,
+    customRoleId?: number | null,
     reason?: string
-  ): Promise<User> {
+  ): Promise<UserWithRelations> {
     const existingUser = await prisma.user.findUnique({
       where: { id },
     });
@@ -83,40 +154,210 @@ export class UserService {
       throw new Error(`User with ID ${id} not found.`);
     }
 
-    const updatedUser = await prisma.user.update({
-      where: { id },
-      data: { role, isActive },
-    });
+    const updateData: any = {
+      role,
+      isActive: role !== UserRole.SUSPENDED && role !== UserRole.PENDING,
+    };
 
-    // Notification Logic
-    const wasPending = existingUser.role === UserRole.PENDING;
-    const isApproved =
-      (updatedUser.role === UserRole.MEMBER || updatedUser.role === UserRole.ADMIN) &&
-      updatedUser.isActive === true;
-
-    if (wasPending && isApproved) {
-      await notifyUserApproved(updatedUser);
+    // Set suspension reason if suspending
+    if (role === UserRole.SUSPENDED) {
+      updateData.suspensionReason = reason;
+    } else {
+      updateData.suspensionReason = null;
     }
 
-    return updatedUser;
+    // Handle custom role assignment
+    if (role === UserRole.MEMBER && customRoleId) {
+      updateData.customRoleId = customRoleId;
+    } else {
+      updateData.customRoleId = null;
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: updateData,
+      include: {
+        customRole: true,
+        member: {
+          include: {
+            skills: {
+              include: {
+                skill: true,
+              },
+            },
+            projects: {
+              include: {
+                tags: {
+                  include: {
+                    tag: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Notification logic
+    const wasPending = existingUser.role === UserRole.PENDING;
+    const isApproved = updatedUser.role === UserRole.MEMBER && updatedUser.isActive;
+    const isRejected = wasPending && role === UserRole.SUSPENDED && reason; // ADD THIS
+
+    if (wasPending && isApproved) {
+      await notifyUserApproved(updatedUser as unknown as UserWithRelations);
+    } else if (isRejected) {
+      await notifyUserRejected(
+        {
+          id: updatedUser.id,
+          username: updatedUser.username,
+          email: updatedUser.email,
+        },
+        reason
+      );
+    }
+
+    return updatedUser as unknown as UserWithRelations;
   }
 
-  static async getPendingMembers() {
-    return prisma.user.findMany({
+  static async assignCustomRole(
+    userId: number,
+    customRoleId: number | null
+  ): Promise<UserWithRelations> {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        customRoleId,
+        role: customRoleId ? UserRole.MEMBER : UserRole.MEMBER,
+      },
+      include: {
+        customRole: true,
+        member: {
+          include: {
+            skills: {
+              include: {
+                skill: true,
+              },
+            },
+            projects: {
+              include: {
+                tags: {
+                  include: {
+                    tag: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return user as unknown as UserWithRelations;
+  }
+
+  static async getUsersWithCustomRoles(): Promise<UserWithRelations[]> {
+    const users = await prisma.user.findMany({
+      where: {
+        customRoleId: { not: null },
+        role: UserRole.MEMBER,
+      },
+      include: {
+        customRole: true,
+        member: {
+          include: {
+            skills: {
+              include: {
+                skill: true,
+              },
+            },
+            projects: {
+              include: {
+                tags: {
+                  include: {
+                    tag: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return users as unknown as UserWithRelations[];
+  }
+
+  static async getPendingMembers(): Promise<UserWithRelations[]> {
+    const users = await prisma.user.findMany({
       where: {
         role: UserRole.PENDING,
       },
       include: {
-        member: true,
+        member: {
+          include: {
+            skills: {
+              include: {
+                skill: true,
+              },
+            },
+            projects: {
+              include: {
+                tags: {
+                  include: {
+                    tag: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        customRole: true,
       },
       orderBy: {
         createdAt: "desc",
       },
     });
-  }
 
-  static async getAllUsers(skip = 0, limit = 100) {
-    return prisma.user.findMany({
+    return users as unknown as UserWithRelations[];
+  }
+  static async getLeads(): Promise<UserWithRelations[]> {
+    const users = await prisma.user.findMany({
+      where: {
+        isLead: true,
+        isActive: true,
+        role: UserRole.MEMBER, // Only active members can be leads
+      },
+      include: {
+        member: {
+          include: {
+            skills: {
+              include: {
+                skill: true,
+              },
+            },
+            projects: {
+              include: {
+                tags: {
+                  include: {
+                    tag: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        customRole: true,
+      },
+    });
+
+    return users as unknown as UserWithRelations[];
+  }
+  static async getAllUsers(
+    skip = 0,
+    limit = 100
+  ): Promise<UserWithRelations[]> {
+    const users = await prisma.user.findMany({
       skip,
       take: limit,
       include: {
@@ -127,12 +368,24 @@ export class UserService {
                 skill: true,
               },
             },
+            projects: {
+              include: {
+                tags: {
+                  include: {
+                    tag: true,
+                  },
+                },
+              },
+            },
           },
         },
+        customRole: true,
       },
       orderBy: {
         createdAt: "desc",
       },
     });
+
+    return users as unknown as UserWithRelations[];
   }
 }

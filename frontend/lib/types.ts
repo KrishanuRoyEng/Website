@@ -1,5 +1,25 @@
-export type UserRole = "ADMIN" | "MEMBER" | "PENDING";
+export type UserRole = "ADMIN" | "MEMBER" | "PENDING" | "SUSPENDED";
 export type ProjectCategory = "WEB" | "AI" | "UIUX";
+
+export enum Permission {
+  VIEW_DASHBOARD = "VIEW_DASHBOARD",
+  MANAGE_MEMBERS = "MANAGE_MEMBERS",
+  MANAGE_PROJECTS = "MANAGE_PROJECTS",
+  MANAGE_EVENTS = "MANAGE_EVENTS",
+  MANAGE_SKILLS = "MANAGE_SKILLS",
+  MANAGE_TAGS = "MANAGE_TAGS",
+  MANAGE_ROLES = "MANAGE_ROLES"
+}
+
+export interface CustomRole {
+  id: number;
+  name: string;
+  description?: string;
+  color: string;
+  permissions: Permission[];
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface User {
   id: number;
@@ -9,10 +29,14 @@ export interface User {
   avatarUrl?: string;
   githubUrl?: string;
   role: UserRole;
+  customRoleId?: number;
+  suspensionReason?: string;
   isActive: boolean;
   isLead: boolean;
   createdAt: string;
   updatedAt: string;
+  customRole?: CustomRole;
+  member?: Member | null;
 }
 
 export interface Member {
@@ -103,3 +127,28 @@ export interface ProjectWithRelations extends Project {
   tags: ProjectTag[];
 }
 
+// Permission checking helper
+export function hasPermission(user: User, permission: Permission): boolean {
+  // ADMIN has all permissions
+  if (user.role === "ADMIN") {
+    return true;
+  }
+  
+  // SUSPENDED and PENDING users have no permissions
+  if (user.role === "SUSPENDED" || user.role === "PENDING") {
+    return false;
+  }
+  
+  // MEMBER with custom role
+  if (user.role === "MEMBER" && user.customRole) {
+    return user.customRole.permissions.includes(permission);
+  }
+  
+  // Regular MEMBER has no admin permissions
+  return false;
+}
+
+// Check if user is admin
+export function isAdmin(user: User): boolean {
+  return user.role === "ADMIN";
+}

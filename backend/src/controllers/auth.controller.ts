@@ -45,6 +45,7 @@ export class AuthController {
       email: user.email,
       avatarUrl: user.avatarUrl,
       role: user.role,
+      customRole: user.customRole,
       isActive: user.isActive,
       isLead: user.isLead,
       token,
@@ -94,6 +95,7 @@ export class AuthController {
         email: user.email,
         avatarUrl: user.avatarUrl,
         role: user.role,
+        customRole: user.customRole,
         isActive: user.isActive,
         isLead: user.isLead,
       },
@@ -118,6 +120,7 @@ export class AuthController {
       avatarUrl: user.avatarUrl,
       githubUrl: user.githubUrl,
       role: user.role,
+      customRole: user.customRole,
       isActive: user.isActive,
       isLead: user.isLead,
     });

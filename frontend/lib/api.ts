@@ -97,10 +97,20 @@ export const adminApi = {
   // Member management
   getPendingMembers: () => apiClient.get("/admin/members/pending"),
   getAllUsers: (params?: any) => apiClient.get("/admin/users", { params }),
-  approveMember: (userId: number, data: any) =>
-    apiClient.put(`/admin/members/${userId}/approve`, data),
-  updateUserRole: (userId: number, data: any) =>
-    apiClient.put(`/admin/users/${userId}/role`, data),
+  setUserLeadStatus: (userId: number, isLead: boolean) =>
+    apiClient.put(`/admin/users/${userId}/lead-status`, { isLead }),
+
+  getLeads: () => apiClient.get("/admin/leads"),
+
+  // Adding User Role
+  updateUserRole: (
+    userId: number,
+    data: {
+      role: string;
+      customRoleId?: number | null;
+      reason?: string;
+    }
+  ) => apiClient.put(`/admin/users/${userId}/role`, data),
 
   // Project management
   getPendingProjects: () => apiClient.get("/admin/projects/pending"),
@@ -114,6 +124,17 @@ export const adminApi = {
   // Event management
   setEventFeatured: (eventId: number, data: any) =>
     apiClient.put(`/admin/events/${eventId}/featured`, data),
+
+  // Custom Roles management
+  getCustomRoles: () => apiClient.get("/admin/custom-roles"),
+  getCustomRole: (id: number) => apiClient.get(`/admin/custom-roles/${id}`),
+  createCustomRole: (data: any) => apiClient.post("/admin/custom-roles", data),
+  updateCustomRole: (id: number, data: any) =>
+    apiClient.put(`/admin/custom-roles/${id}`, data),
+  deleteCustomRole: (id: number) =>
+    apiClient.delete(`/admin/custom-roles/${id}`),
+  getRoleUsers: (roleId: number) =>
+    apiClient.get(`/admin/custom-roles/${roleId}/users`),
 };
 
 export default apiClient;

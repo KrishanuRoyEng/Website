@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { AuthRequest } from '../types';
+import { AuthRequest, Permission } from '../types';
 import { verifyToken } from '../utils/auth';
 import { UserService } from '../services/user.service';
 
@@ -27,6 +27,7 @@ export const authenticate = async (
     req.user = {
       id: user.id,
       role: user.role,
+      customRole: user.customRole || undefined, // Handle null case
     };
 
     next();
@@ -57,6 +58,7 @@ export const requireActive = async (
   }
 };
 
+// Updated requireAdmin to check for dashboard permission
 export const requireAdmin = (
   req: AuthRequest,
   res: Response,
@@ -66,12 +68,49 @@ export const requireAdmin = (
     return res.status(401).json({ error: 'Authentication required' });
   }
 
-  if (req.user.role !== 'ADMIN') {
-    return res.status(403).json({ error: 'Admin access required' });
+  // ADMIN role has full access
+  if (req.user.role === 'ADMIN') {
+    return next();
   }
 
-  next();
+  // Check if user has custom role with dashboard permission
+  if (req.user.customRole?.permissions?.includes(Permission.VIEW_DASHBOARD)) {
+    return next();
+  }
+
+  return res.status(403).json({ error: 'Admin access required' });
 };
+
+// More specific permission-based middleware
+export const requirePermission = (permission: Permission) => {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // ADMIN has all permissions
+    if (req.user.role === 'ADMIN') {
+      return next();
+    }
+
+    // SUSPENDED and PENDING users have no permissions
+    if (req.user.role === 'SUSPENDED' || req.user.role === 'PENDING') {
+      return res.status(403).json({ error: 'Account is not active' });
+    }
+
+    // Check custom role permissions
+    if (req.user.customRole?.permissions?.includes(permission)) {
+      return next();
+    }
+
+    return res.status(403).json({ 
+      error: `Permission denied: ${permission} required` 
+    });
+  };
+};
+
+// Specific middleware for dashboard access
+export const requireDashboardAccess = requirePermission(Permission.VIEW_DASHBOARD);
 
 export const optionalAuth = async (
   req: AuthRequest,
@@ -91,6 +130,7 @@ export const optionalAuth = async (
         req.user = {
           id: user.id,
           role: user.role,
+          customRole: user.customRole || undefined,
         };
       }
     }

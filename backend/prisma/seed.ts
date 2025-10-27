@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Permission } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
@@ -15,7 +15,7 @@ async function main() {
   const hasSuperadminConfig = 
     superadminGithubId && 
     superadminUsername && 
-    superadminEmail
+    superadminEmail;
 
   if (hasSuperadminConfig) {
     // Super-Admin User Data
@@ -66,9 +66,105 @@ async function main() {
     console.log("SUPERADMIN_GITHUB_ID, SUPERADMIN_USERNAME, SUPERADMIN_EMAIL, SUPERADMIN_FULL_NAME");
   }
 
-  // --- PUBLIC SEED DATA (Always runs) ---
+  // --- PREDEFINED CUSTOM ROLES ---
+  console.log("🎭 Seeding predefined custom roles...");
+
+  const predefinedRoles = [
+    {
+      name: "Moderator",
+      description: "Can manage members, projects, and events. Ideal for community moderators.",
+      color: "#3B82F6", // Blue
+      permissions: [
+        Permission.VIEW_DASHBOARD,
+        Permission.MANAGE_MEMBERS,
+        Permission.MANAGE_PROJECTS,
+        Permission.MANAGE_EVENTS,
+      ]
+    },
+    {
+      name: "Content Manager",
+      description: "Can manage projects, events, skills, and tags. Perfect for content curation.",
+      color: "#10B981", // Green
+      permissions: [
+        Permission.VIEW_DASHBOARD,
+        Permission.MANAGE_PROJECTS,
+        Permission.MANAGE_EVENTS,
+        Permission.MANAGE_SKILLS,
+        Permission.MANAGE_TAGS,
+      ]
+    },
+    {
+      name: "Project Reviewer",
+      description: "Specialized role for reviewing and approving projects.",
+      color: "#F59E0B", // Amber
+      permissions: [
+        Permission.VIEW_DASHBOARD,
+        Permission.MANAGE_PROJECTS,
+      ]
+    },
+    {
+      name: "Event Coordinator",
+      description: "Focused on managing events and community activities.",
+      color: "#8B5CF6", // Violet
+      permissions: [
+        Permission.VIEW_DASHBOARD,
+        Permission.MANAGE_EVENTS,
+      ]
+    },
+    {
+      name: "Tech Lead",
+      description: "Technical leadership role with broad content management permissions.",
+      color: "#EC4899", // Pink
+      permissions: [
+        Permission.VIEW_DASHBOARD,
+        Permission.MANAGE_PROJECTS,
+        Permission.MANAGE_SKILLS,
+        Permission.MANAGE_TAGS,
+      ]
+    },
+    {
+      name: "Community Manager",
+      description: "Focuses on member management and community engagement.",
+      color: "#06B6D4", // Cyan
+      permissions: [
+        Permission.VIEW_DASHBOARD,
+        Permission.MANAGE_MEMBERS,
+        Permission.MANAGE_EVENTS,
+      ]
+    }
+  ];
+
+  let rolesAdded = 0;
+  for (const roleData of predefinedRoles) {
+    try {
+      await prisma.customRole.upsert({
+        where: { name: roleData.name },
+        update: {
+          description: roleData.description,
+          color: roleData.color,
+          permissions: roleData.permissions,
+        },
+        create: {
+          name: roleData.name,
+          description: roleData.description,
+          color: roleData.color,
+          permissions: roleData.permissions,
+          createdBy: hasSuperadminConfig ? 
+            (await prisma.user.findFirst({ where: { role: "ADMIN" } }))?.id : 
+            undefined,
+        },
+      });
+      rolesAdded++;
+      console.log(`✅ Role "${roleData.name}" seeded successfully`);
+    } catch (error) {
+      console.error(`❌ Error seeding role "${roleData.name}":`, error);
+    }
+  }
+
+  console.log(`✅ Seeded ${rolesAdded} predefined custom roles.`);
 
   // --- TAGS ---
+  console.log("🏷️ Seeding tags...");
   const tags = [
     // General project types
     "Web Development",
@@ -108,7 +204,23 @@ async function main() {
     "Collaboration",
   ];
 
+  // Add only new tags that don't exist
+  let tagsAdded = 0;
+  for (const tagName of tags) {
+    try {
+      await prisma.tag.upsert({
+        where: { name: tagName },
+        update: {}, // Don't update if exists
+        create: { name: tagName },
+      });
+      tagsAdded++;
+    } catch (error) {
+      // Silent skip for existing tags
+    }
+  }
+
   // --- SKILLS ---
+  console.log("🛠️ Seeding skills...");
   const skills = [
     // Languages
     { name: "C", category: "Language" },
@@ -214,21 +326,6 @@ async function main() {
     { name: "Unreal Engine", category: "Game Dev" },
   ];
 
-  // Add only new tags that don't exist
-  let tagsAdded = 0;
-  for (const tagName of tags) {
-    try {
-      await prisma.tag.upsert({
-        where: { name: tagName },
-        update: {}, // Don't update if exists
-        create: { name: tagName },
-      });
-      tagsAdded++;
-    } catch (error) {
-      // Silent skip for existing tags
-    }
-  }
-
   // Add only new skills that don't exist
   let skillsAdded = 0;
   for (const skill of skills) {
@@ -244,10 +341,12 @@ async function main() {
     }
   }
 
-  console.log(`✅ Seeded ${tagsAdded} new tags and ${skillsAdded} new skills.`);
-  console.log(
-    `📊 Total tags: ${await prisma.tag.count()}, Total skills: ${await prisma.skill.count()}`
-  );
+  console.log(`✅ Seeding completed!`);
+  console.log(`📊 Summary:`);
+  console.log(`   - ${rolesAdded} predefined custom roles`);
+  console.log(`   - ${tagsAdded} new tags (Total: ${await prisma.tag.count()})`);
+  console.log(`   - ${skillsAdded} new skills (Total: ${await prisma.skill.count()})`);
+  console.log(`   - Custom roles available: Moderator, Content Manager, Project Reviewer, Event Coordinator, Tech Lead, Community Manager`);
 }
 
 main()

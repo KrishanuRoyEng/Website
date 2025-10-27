@@ -7,7 +7,11 @@ export class MemberService {
     return prisma.member.findUnique({
       where: { id },
       include: {
-        user: true,
+        user: {
+          include: {
+            customRole: true,
+          },
+        },
         skills: {
           include: {
             skill: true,
@@ -30,7 +34,11 @@ export class MemberService {
     return prisma.member.findUnique({
       where: { userId },
       include: {
-        user: true,
+        user: {
+          include: {
+            customRole: true,
+          },
+        },
         skills: {
           include: {
             skill: true,
@@ -78,7 +86,11 @@ export class MemberService {
       skip,
       take: limit,
       include: {
-        user: true,
+        user: {
+          include: {
+            customRole: true,
+          },
+        },
         skills: {
           include: {
             skill: true,
@@ -87,25 +99,6 @@ export class MemberService {
       },
       orderBy: {
         createdAt: 'desc',
-      },
-    });
-  }
-
-  static async getLeads() {
-    return prisma.member.findMany({
-      where: {
-        user: {
-          isLead: true,
-          isActive: true,
-        },
-      },
-      include: {
-        user: true,
-        skills: {
-          include: {
-            skill: true,
-          },
-        },
       },
     });
   }
@@ -124,7 +117,11 @@ export class MemberService {
       where: { id },
       data,
       include: {
-        user: true,
+        user: {
+          include: {
+            customRole: true,
+          },
+        },
         skills: {
           include: {
             skill: true,

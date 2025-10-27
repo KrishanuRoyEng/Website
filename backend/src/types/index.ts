@@ -1,12 +1,38 @@
 import { Request } from "express";
 
-export type UserRole = "ADMIN" | "MEMBER" | "PENDING";
+export enum UserRole {
+  ADMIN = "ADMIN",
+  MEMBER = "MEMBER",
+  PENDING = "PENDING",
+  SUSPENDED = "SUSPENDED",
+}
+
+export enum Permission {
+  VIEW_DASHBOARD = 'VIEW_DASHBOARD',
+  MANAGE_MEMBERS = 'MANAGE_MEMBERS',
+  MANAGE_PROJECTS = 'MANAGE_PROJECTS',
+  MANAGE_EVENTS = 'MANAGE_EVENTS',
+  MANAGE_SKILLS = 'MANAGE_SKILLS',
+  MANAGE_TAGS = 'MANAGE_TAGS',
+  MANAGE_ROLES = 'MANAGE_ROLES'
+}
+
 export type ProjectCategory = "WEB" | "AI" | "UIUX";
 
 export interface AuthRequest extends Request {
   user?: {
     id: number;
     role: string;
+    customRole?: {
+      id: number;
+      name: string;
+      description: string | null;
+      color: string;
+      permissions: Permission[];
+      createdAt: Date;
+      updatedAt: Date;
+      createdBy?: number;
+    } | null;
   };
 }
 
@@ -105,8 +131,22 @@ export interface UpdateEventDTO {
 
 export interface MemberApprovalDTO {
   isActive: boolean;
-  role: UserRole;
+  customRoleId?: number;
   reason?: string;
+}
+
+export interface CreateCustomRoleDTO {
+  name: string;
+  description?: string;
+  color?: string;
+  permissions: Permission[];
+}
+
+export interface UpdateCustomRoleDTO {
+  name?: string;
+  description?: string;
+  color?: string;
+  permissions?: Permission[];
 }
 
 export interface ProjectApprovalDTO {
@@ -115,6 +155,17 @@ export interface ProjectApprovalDTO {
 }
 
 // Core entity interfaces
+export interface CustomRole {
+  id: number;
+  name: string;
+  description: string | null;
+  color: string;
+  permissions: Permission[];
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy?: number;
+}
+
 export interface User {
   id: number;
   githubId: string;
@@ -123,10 +174,14 @@ export interface User {
   avatarUrl?: string | null;
   githubUrl?: string | null;
   role: UserRole;
+  customRoleId?: number | null;
+  suspensionReason?: string | null;
   isActive: boolean;
   isLead: boolean;
   createdAt: Date;
   updatedAt: Date;
+  customRole?: CustomRole | null;
+  member?: Member | null;
 }
 
 export interface Member {
@@ -199,18 +254,6 @@ export interface Event {
 }
 
 // Extended interfaces with relations
-export interface ProjectWithRelations extends Project {
-  tags: {
-    tag: {
-      id: number;
-      name: string;
-    };
-  }[];
-  member?: Member & {
-    user: User;
-  };
-}
-
 export interface MemberWithRelations extends Member {
   user: User;
   skills: (MemberSkill & {
@@ -223,11 +266,20 @@ export interface MemberWithRelations extends Member {
   })[];
 }
 
-export interface UserWithMember extends User {
-  member?: MemberWithRelations;
+export interface UserWithRelations extends User {
+  member?: MemberWithRelations | null;
 }
 
-// Legacy interfaces (can be removed if not used)
+export interface ProjectWithRelations extends Project {
+  tags: (ProjectTag & {
+    tag: Tag;
+  })[];
+  member?: (Member & {
+    user: User;
+  }) | null;
+}
+
+// Legacy interfaces
 export interface ProjectWithRejection extends Project {
   rejectionReason?: string;
 }
@@ -262,4 +314,34 @@ export interface MemberQuery extends PaginationQuery {
 export interface EventQuery extends PaginationQuery {
   upcomingOnly?: boolean;
   featuredOnly?: boolean;
+}
+
+// Permission checking helper - UPDATE TO HANDLE NULL
+export function hasPermission(user: User, permission: Permission): boolean {
+  // ADMIN has all permissions
+  if (user.role === UserRole.ADMIN) {
+    return true;
+  }
+  
+  // SUSPENDED and PENDING users have no permissions
+  if (user.role === UserRole.SUSPENDED || user.role === UserRole.PENDING) {
+    return false;
+  }
+  
+  // MEMBER with custom role
+  if (user.role === UserRole.MEMBER && user.customRole) {
+    return user.customRole.permissions.includes(permission);
+  }
+  
+  // Regular MEMBER has no admin permissions
+  return false;
+}
+
+// Type guard for safe property access
+export function hasMember(user: User): user is User & { member: NonNullable<User['member']> } {
+  return user.member !== null && user.member !== undefined;
+}
+
+export function hasCustomRole(user: User): user is User & { customRole: NonNullable<User['customRole']> } {
+  return user.customRole !== null && user.customRole !== undefined;
 }

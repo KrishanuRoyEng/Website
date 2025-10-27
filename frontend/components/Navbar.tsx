@@ -2,12 +2,28 @@ import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Menu, X, LogOut, LogIn, User } from "lucide-react";
 import { useState } from "react";
+import { Permission } from "../lib/types";
 
 export default function Navbar() {
   const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
 
-  const isAdmin = (session?.user as any)?.role === "ADMIN";
+  // Check if user has admin role OR dashboard permission
+  const hasAdminAccess = () => {
+    if (!session?.user) return false;
+    
+    const user = session.user as any;
+    
+    // If user has ADMIN role
+    if (user.role === "ADMIN") return true;
+    
+    // If user has a custom role with dashboard permission
+    if (user.customRole?.permissions?.includes(Permission.VIEW_DASHBOARD)) {
+      return true;
+    }
+    
+    return false;
+  };
 
   const handleSignIn = () => {
     signIn("github", { callbackUrl: "/" });
@@ -16,6 +32,8 @@ export default function Navbar() {
   const handleSignOut = () => {
     signOut({ callbackUrl: "/" });
   };
+
+  const canAccessAdmin = hasAdminAccess();
 
   return (
     <nav className="bg-slate-900/50 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
@@ -48,7 +66,7 @@ export default function Navbar() {
             >
               Events
             </Link>
-            {isAdmin && (
+            {canAccessAdmin && (
               <Link
                 href="/admin"
                 className="text-slate-300 hover:text-accent transition-colors whitespace-nowrap"
@@ -130,7 +148,7 @@ export default function Navbar() {
             >
               Events
             </Link>
-            {isAdmin && (
+            {canAccessAdmin && (
               <Link
                 href="/admin"
                 onClick={() => setIsOpen(false)}

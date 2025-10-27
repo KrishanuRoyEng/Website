@@ -12,6 +12,17 @@ enum UserRole {
   ADMIN
   MEMBER
   PENDING
+  SUSPENDED
+}
+
+enum Permission {
+  VIEW_DASHBOARD
+  MANAGE_MEMBERS
+  MANAGE_PROJECTS
+  MANAGE_EVENTS
+  MANAGE_SKILLS
+  MANAGE_TAGS
+  MANAGE_ROLES
 }
 
 enum ProjectCategory {
@@ -20,21 +31,42 @@ enum ProjectCategory {
   UIUX
 }
 
+model CustomRole {
+  id          Int         @id @default(autoincrement())
+  name        String      @unique
+  description String?
+  color       String      @default("#6B7280")
+  permissions Permission[]
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  createdBy   Int?        @map("created_by")
+
+  users       User[]      @relation("RoleUsers")
+  creator     User?       @relation("RoleCreator", fields: [createdBy], references: [id])
+
+  @@map("custom_roles")
+}
+
 model User {
-  id         Int      @id @default(autoincrement())
-  githubId   String   @unique @map("github_id")
-  username   String   @unique
-  email      String?  @unique
-  avatarUrl  String?  @map("avatar_url")
-  githubUrl  String?  @map("github_url")
-  role       UserRole @default(PENDING)
-  isActive   Boolean  @default(false) @map("is_active")
-  isLead     Boolean  @default(false) @map("is_lead")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id           Int         @id @default(autoincrement())
+  githubId     String      @unique @map("github_id")
+  username     String      @unique
+  email        String?     @unique
+  avatarUrl    String?     @map("avatar_url")
+  githubUrl    String?     @map("github_url")
+  role         UserRole    @default(PENDING)
+  customRoleId Int?        @map("custom_role_id")
+  suspensionReason String? @map("suspension_reason") @db.Text
+  isActive     Boolean     @default(false) @map("is_active")
+  isLead       Boolean     @default(false) @map("is_lead")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
 
   member        Member?
   createdEvents Event[]
+  
+  customRole    CustomRole? @relation("RoleUsers", fields: [customRoleId], references: [id])
+  createdRoles  CustomRole[] @relation("RoleCreator")
 
   @@map("users")
 }

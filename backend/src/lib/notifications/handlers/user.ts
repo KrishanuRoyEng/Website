@@ -4,6 +4,7 @@ import { NOTIFICATION_CONFIG } from "../config";
 import {
   getUserApprovedEmailHTML,
   getNewUserAdminEmailHTML,
+  getUserRejectedEmailHTML,
 } from "../templates/user-emails";
 import logger from "../../../utils/logger";
 
@@ -97,7 +98,7 @@ export async function notifyNewUserSignup(user: {
 export async function notifyUserApproved(user: {
   id: number;
   username: string;
-  email: string | null;
+  email?: string | null;
 }): Promise<void> {
   try {
     logger.info("Sending user approval notifications", { userId: user.id });
@@ -145,6 +146,77 @@ export async function notifyUserApproved(user: {
     logger.error("Error sending user approval notifications", {
       error: error.message,
       userId: user.id,
+    });
+  }
+}
+
+/**
+ * Notify user when their account is rejected
+ */
+export async function notifyUserRejected(user: {
+  id: number;
+  username: string;
+  email?: string | null;
+}, reason: string): Promise<void> {
+  try {
+    logger.info("Sending user rejection notifications", { 
+      userId: user.id,
+      reason: reason 
+    });
+
+    // Send Discord notification
+    await sendDiscordNotification(NOTIFICATION_CONFIG.discord.rejections, {
+      title: "❌ User Rejected",
+      description: `${user.username}'s application has been rejected`,
+      color: NOTIFICATION_CONFIG.colors.red,
+      fields: [
+        {
+          name: "👤 Username",
+          value: user.username,
+          inline: true,
+        },
+        {
+          name: "📧 Email",
+          value: user.email ?? "N.A.",
+          inline: true,
+        },
+        {
+          name: "📋 Reason",
+          value: reason.length > 100 ? `${reason.substring(0, 100)}...` : reason,
+          inline: false,
+        },
+      ],
+      timestamp: new Date().toISOString(),
+      footer: {
+        text: "User has been notified via email",
+      },
+    });
+
+    // GUARD CLAUSE - Do not proceed if user has no email
+    if (!user.email) {
+      logger.warn("Skipping rejection email: User has no email", {
+        userId: user.id,
+        username: user.username,
+        reason: reason,
+      });
+      return;
+    }
+
+    // Send email to user
+    await sendEmail({
+      to: user.email,
+      subject: "📋 Update on Your Application",
+      html: getUserRejectedEmailHTML(user.username, reason),
+    });
+
+    logger.info("User rejection notifications sent successfully", {
+      userId: user.id,
+    });
+  } catch (error: any) {
+    logger.error("Error sending user rejection notifications", {
+      error: error.message,
+      userId: user.id,
+      reason: reason,
     });
   }
 }

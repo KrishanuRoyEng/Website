@@ -6,6 +6,7 @@ import skillRoutes from './skill.routes';
 import tagRoutes from './tag.routes';
 import eventRoutes from './event.routes';
 import adminRoutes from './admin.routes';
+import customRoleRoutes from './customRole.routes';
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use('/skills', skillRoutes);
 router.use('/tags', tagRoutes);
 router.use('/events', eventRoutes);
 router.use('/admin', adminRoutes);
+router.use('/admin/custom-roles', customRoleRoutes);
 
 export default router;

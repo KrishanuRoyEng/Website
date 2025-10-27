@@ -9,6 +9,7 @@ export const NOTIFICATION_CONFIG = {
   discord: {
     newUsers: process.env.DISCORD_WEBHOOK_NEW_USERS,
     approvals: process.env.DISCORD_WEBHOOK_APPROVALS,
+    rejections: process.env.DISCORD_WEBHOOK_REJECTIONS,
     newProjects: process.env.DISCORD_WEBHOOK_NEW_PROJECTS,
     projectApprovals: process.env.DISCORD_WEBHOOK_PROJECT_APPROVALS,
     projectRejections: process.env.DISCORD_WEBHOOK_PROJECT_REJECTIONS,

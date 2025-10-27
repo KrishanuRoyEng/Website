@@ -6,7 +6,20 @@ import { memberApi } from "@/lib/api";
 import { Member, Project } from "@/lib/types";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import { Github, Linkedin, ExternalLink, Mail, Search, Filter, X } from "lucide-react";
+import { 
+  Github, 
+  Linkedin, 
+  ExternalLink, 
+  Mail, 
+  Search, 
+  Filter, 
+  X, 
+  Crown, 
+  Shield, 
+  User, 
+  Code, 
+  Award 
+} from "lucide-react";
 
 const PROJECTS_PER_PAGE = 3;
 
@@ -117,105 +130,159 @@ export default function MemberProfilePage() {
   return (
     <Layout>
       {/* Profile Header */}
-      <section className="bg-gradient-to-b from-slate-800 to-slate-900 py-12">
+      <section className="bg-gradient-to-b from-slate-800 to-slate-900 py-8 md:py-12">
         <div className="container-custom">
-          <div className="flex flex-col md:flex-row gap-8 items-start">
-            {/* Avatar and Basic Info */}
-            <div className="flex-shrink-0">
-              <img
-                src={member.user.avatarUrl || "/avatar.png"}
-                alt={member.fullName}
-                className="w-32 h-32 rounded-full border-4 border-primary/50 shadow-lg"
-              />
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
+            
+            {/* Avatar Section */}
+            <div className="flex flex-col items-center w-full lg:w-auto">
+              <div className="relative">
+                <img
+                  src={member.user.avatarUrl || "/avatar.png"}
+                  alt={member.fullName}
+                  className="w-28 h-28 md:w-32 md:h-32 lg:w-36 lg:h-36 rounded-full border-4 border-primary/50 shadow-lg"
+                />
+              </div>
             </div>
 
-            <div className="flex-1">
-              <h1 className="text-4xl font-bold text-white mb-2">
-                {member.fullName || member.user.username}
-              </h1>
-
-              {member.roleTitle && (
-                <p className="text-lg text-primary mb-4">{member.roleTitle}</p>
-              )}
-
-              {member.user.isLead && (
-                <span className="badge-accent mb-4">Community Lead</span>
-              )}
-
-              {member.bio && (
-                <p className="text-slate-400 max-w-2xl mb-6">{member.bio}</p>
-              )}
-
-              {/* Dev Stack */}
-              {member.devStack && (
-                <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-slate-300 mb-2">
-                    Dev Stack
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {member.devStack.split(",").map((stack) => (
-                      <span key={stack.trim()} className="badge-primary">
-                        {stack.trim()}
-                      </span>
-                    ))}
+            {/* Profile Info Section */}
+            <div className="flex-1 w-full">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6">
+                <div className="flex-1">
+                  {/* Name and Title */}
+                  <div className="text-center lg:text-left mb-4">
+                    <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2">
+                      {member.fullName || member.user.username}
+                    </h1>
+                    
+                    {member.roleTitle && (
+                      <p className="text-lg md:text-xl text-primary">
+                        {member.roleTitle}
+                      </p>
+                    )}
                   </div>
-                </div>
-              )}
 
-              {/* Skills */}
-              {member.skills && member.skills.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-sm font-semibold text-slate-300 mb-2">
-                    Skills
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {member.skills.map((memberSkill) => (
+                  {/* Badges Row */}
+                  <div className="flex flex-wrap gap-2 justify-center lg:justify-start mb-6">
+                    {/* Community Lead Badge */}
+                    {member.user.isLead && (
+                      <span className="badge-accent flex items-center gap-1.5 px-3 py-1.5 text-sm">
+                        <Crown size={14} />
+                        Community Lead
+                      </span>
+                    )}
+
+                    {/* Custom Role Badge */}
+                    {member.user.customRole && (
                       <span
-                        key={memberSkill.skillId}
-                        className="badge-secondary"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border"
+                        style={{
+                          backgroundColor: `${member.user.customRole.color}15`,
+                          color: member.user.customRole.color,
+                          borderColor: `${member.user.customRole.color}30`,
+                        }}
                       >
-                        {memberSkill.skill.name}
+                        <Shield size={14} />
+                        {member.user.customRole.name}
                       </span>
-                    ))}
+                    )}
                   </div>
                 </div>
+              </div>
+
+              {/* Bio Section */}
+              {member.bio && (
+                <div className="mb-8">
+                  <div className="flex items-center gap-2 mb-3 justify-center lg:justify-start">
+                    <User size={18} className="text-slate-400" />
+                    <h3 className="text-base font-semibold text-slate-300">About</h3>
+                  </div>
+                  <p className="text-slate-300 text-base md:text-lg text-center lg:text-left leading-relaxed">
+                    {member.bio}
+                  </p>
+                </div>
               )}
+
+              {/* Skills & Tech Stack Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                {/* Dev Stack */}
+                {member.devStack && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3 justify-center lg:justify-start">
+                      <Code size={16} className="text-slate-400" />
+                      <h3 className="text-sm font-semibold text-slate-300">Tech Stack</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 justify-center lg:justify-start">
+                      {member.devStack.split(",").map((stack) => (
+                        <span
+                          key={stack.trim()}
+                          className="badge-primary text-xs px-2 py-1"
+                        >
+                          {stack.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Skills */}
+                {member.skills && member.skills.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-3 justify-center lg:justify-start">
+                      <Award size={16} className="text-slate-400" />
+                      <h3 className="text-sm font-semibold text-slate-300">Skills</h3>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 justify-center lg:justify-start">
+                      {member.skills.map((memberSkill) => (
+                        <span
+                          key={memberSkill.skill.id}
+                          className="badge-secondary text-xs px-2 py-1"
+                        >
+                          {memberSkill.skill.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Social Links */}
-              <div className="flex gap-4 pt-6 border-t border-slate-700">
-                {member.user.githubUrl && (
-                  <a
-                    href={member.user.githubUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-secondary flex items-center gap-2"
-                  >
-                    <Github size={18} />
-                    GitHub
-                  </a>
-                )}
-                {member.linkedinUrl && (
-                  <a
-                    href={member.linkedinUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-secondary flex items-center gap-2"
-                  >
-                    <Linkedin size={18} />
-                    LinkedIn
-                  </a>
-                )}
-                {member.portfolioUrl && (
-                  <a
-                    href={member.portfolioUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-primary flex items-center gap-2"
-                  >
-                    <ExternalLink size={18} />
-                    Portfolio
-                  </a>
-                )}
+              <div className="pt-6 border-t border-slate-700">
+                <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
+                  {member.user.githubUrl && (
+                    <a
+                      href={member.user.githubUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-secondary flex items-center gap-2 text-sm px-3 py-2 flex-1 lg:flex-none min-w-[120px] justify-center"
+                    >
+                      <Github size={16} />
+                      GitHub
+                    </a>
+                  )}
+                  {member.linkedinUrl && (
+                    <a
+                      href={member.linkedinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-secondary flex items-center gap-2 text-sm px-3 py-2 flex-1 lg:flex-none min-w-[120px] justify-center"
+                    >
+                      <Linkedin size={16} />
+                      LinkedIn
+                    </a>
+                  )}
+                  {member.portfolioUrl && (
+                    <a
+                      href={member.portfolioUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-primary flex items-center gap-2 text-sm px-3 py-2 flex-1 lg:flex-none min-w-[120px] justify-center"
+                    >
+                      <ExternalLink size={16} />
+                      Portfolio
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -360,7 +427,7 @@ export default function MemberProfilePage() {
             </div>
             <p className="text-slate-400 text-lg mb-2">No projects yet</p>
             <p className="text-slate-500 text-sm">
-              {member.fullName || member.user.username} hasn't added any projects yet
+              {member.fullName || member.user.username} hasn&apos;t added any projects yet
             </p>
           </div>
         )}
