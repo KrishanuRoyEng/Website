@@ -22,7 +22,7 @@ import ProjectsTab from "@/components/admin/ProjectsTab/ProjectsTab";
 import EventsTab from "@/components/admin/EventsTab";
 import SkillsTab from "@/components/admin/SkillsTab";
 import TagsTab from "@/components/admin/TagsTab";
-import RolesTab from "@/components/admin/RolesTab";
+import RolesTab from "@/components/admin/RolesTab/RolesTab";
 
 type TabType = "members" | "projects" | "events" | "skills" | "tags" | "roles";
 
@@ -147,11 +147,6 @@ export default function AdminDashboard() {
   }, [availableTabs, activeTab]);
 
   useEffect(() => {
-    console.log("Session status:", status);
-    console.log("Session data:", session);
-    console.log("Can access admin:", canAccessAdmin);
-    console.log("Available tabs:", availableTabs);
-
     if (status === "unauthenticated") {
       console.log("Not authenticated, redirecting to signin");
       signIn();

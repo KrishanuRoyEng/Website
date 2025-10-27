@@ -135,6 +135,8 @@ export const adminApi = {
     apiClient.delete(`/admin/custom-roles/${id}`),
   getRoleUsers: (roleId: number) =>
     apiClient.get(`/admin/custom-roles/${roleId}/users`),
+  updateRolePosition: (roleId: number, data: { newPosition: number }) =>
+    apiClient.put(`/admin/custom-roles/${roleId}/position`, data),
 };
 
 export default apiClient;

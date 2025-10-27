@@ -32,29 +32,46 @@ export default function MembersList({
   const [customRoleFilter, setCustomRoleFilter] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [customRoles, setCustomRoles] = useState<any[]>([]);
+  const [loadingCustomRoles, setLoadingCustomRoles] = useState(false);
 
-  // Load custom roles from database
   useEffect(() => {
     const loadCustomRoles = async () => {
       try {
-        const res = await adminApi.getCustomRoles();
-        setCustomRoles(res.data);
+        setLoadingCustomRoles(true);
+        const response = await adminApi.getCustomRoles();
+        const responseData = response.data;
+        
+        let rolesData = [];
+        
+        if (Array.isArray(responseData)) {
+          rolesData = responseData;
+        } else if (responseData && Array.isArray(responseData.data)) {
+          rolesData = responseData.data;
+        } else if (responseData && Array.isArray(responseData.roles)) {
+          rolesData = responseData.roles;
+        }
+        
+        console.log('Custom roles loaded:', rolesData);
+        setCustomRoles(rolesData);
       } catch (error) {
         console.error("Failed to load custom roles:", error);
+        onError("Failed to load custom roles");
+        setCustomRoles([]);
+      } finally {
+        setLoadingCustomRoles(false);
       }
     };
 
     loadCustomRoles();
-  }, []);
+  }, [onError]);
 
-  // Filter users - ADD SAFETY CHECK HERE
+  // Filter users
   const filteredUsers = useMemo(() => {
     if (!users || !Array.isArray(users)) {
       return [];
     }
     
     return users.filter((user) => {
-      // Add safety check for each user
       if (!user || !user.id) return false;
 
       const matchesSearch =
@@ -147,22 +164,28 @@ export default function MembersList({
               setCurrentPage(1);
             }}
             className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-primary"
+            disabled={loadingCustomRoles}
           >
             <option value="all">All Custom Roles</option>
             <option value="none">No Custom Role</option>
-            {customRoles.map((role) => (
-              <option key={role.id} value={role.id.toString()}>
-                {role.name}
-              </option>
-            ))}
+            {loadingCustomRoles ? (
+              <option disabled>Loading custom roles...</option>
+            ) : (
+              // Safe mapping with Array.isArray check
+              Array.isArray(customRoles) && customRoles.map((role) => (
+                <option key={role.id} value={role.id.toString()}>
+                  {role.name}
+                </option>
+              ))
+            )}
           </select>
         </div>
       )}
 
-      {/* Members Grid - ADD SAFETY CHECK HERE */}
+      {/* Members Grid */}
       <div className="space-y-3">
         {paginatedUsers
-          .filter(user => user && user.id) // Double-check for valid users
+          .filter(user => user && user.id)
           .map((user) => (
             <MemberCard
               key={user.id}

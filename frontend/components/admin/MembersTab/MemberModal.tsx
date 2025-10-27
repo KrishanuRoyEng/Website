@@ -37,8 +37,23 @@ export default function MemberModal({
 
   const loadCustomRoles = async () => {
     try {
-      const res = await adminApi.getCustomRoles();
-      setCustomRoles(res.data);
+      const response = await adminApi.getCustomRoles();
+      
+      // Handle the Axios response structure
+      const responseData = response.data;
+      
+      let rolesData: CustomRole[] = [];
+      
+      if (Array.isArray(responseData)) {
+        rolesData = responseData;
+      } else if (responseData && Array.isArray(responseData.data)) {
+        rolesData = responseData.data;
+      } else if (responseData && Array.isArray(responseData.roles)) {
+        rolesData = responseData.roles;
+      }
+      
+      console.log('Custom roles in member modal:', rolesData);
+      setCustomRoles(rolesData);
     } catch (error) {
       console.error("Failed to load custom roles:", error);
     }
@@ -235,7 +250,8 @@ export default function MemberModal({
                       className="w-full p-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
                     >
                       <option value="">Regular Member</option>
-                      {customRoles.map((role) => (
+                      {/* Safe array mapping */}
+                      {Array.isArray(customRoles) && customRoles.map((role) => (
                         <option key={role.id} value={role.id}>
                           {role.name}
                         </option>

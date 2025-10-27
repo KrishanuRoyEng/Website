@@ -2,10 +2,11 @@ import { Router } from 'express';
 import { AdminController } from '../controllers/admin.controller';
 import { 
   authenticate, 
-  requireAdmin, 
-  requirePermission, 
-  requireDashboardAccess 
+  requirePermission
 } from '../middlewares/auth.middleware';
+import { 
+  canModifyTargetUser 
+} from '../middlewares/role-hierarchy.middleware';
 import { Permission } from '../types';
 
 const router = Router();
@@ -18,10 +19,10 @@ router.get('/members/pending', requirePermission(Permission.VIEW_DASHBOARD), Adm
 router.get('/users', requirePermission(Permission.VIEW_DASHBOARD), AdminController.getAllUsers);
 router.get('/leads', requirePermission(Permission.VIEW_DASHBOARD), AdminController.getLeads);
 
-// Member management - require specific permissions
-router.put('/members/:userId/approve', requirePermission(Permission.MANAGE_MEMBERS), AdminController.approveMember);
-router.put('/users/:userId/role', requirePermission(Permission.MANAGE_MEMBERS), AdminController.updateUserRole);
-router.put('/users/:userId/lead-status', requirePermission(Permission.MANAGE_MEMBERS), AdminController.setUserLeadStatus);
+// Member management - require specific permissions + hierarchy checks
+router.put('/members/:userId/approve', requirePermission(Permission.MANAGE_MEMBERS), canModifyTargetUser, AdminController.approveMember);
+router.put('/users/:userId/role', requirePermission(Permission.MANAGE_MEMBERS), canModifyTargetUser, AdminController.updateUserRole);
+router.put('/users/:userId/lead-status', requirePermission(Permission.MANAGE_MEMBERS), canModifyTargetUser, AdminController.setUserLeadStatus);
 
 // Project management - require specific permissions
 router.get('/projects/pending', requirePermission(Permission.MANAGE_PROJECTS), AdminController.getPendingProjects);

@@ -17,6 +17,7 @@ export interface CustomRole {
   description?: string;
   color: string;
   permissions: Permission[];
+  position: number;
   createdAt: string;
   updatedAt: string;
 }

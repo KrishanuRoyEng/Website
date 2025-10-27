@@ -29,6 +29,7 @@ export interface AuthRequest extends Request {
       description: string | null;
       color: string;
       permissions: Permission[];
+      position: number;
       createdAt: Date;
       updatedAt: Date;
       createdBy?: number;
@@ -161,6 +162,7 @@ export interface CustomRole {
   description: string | null;
   color: string;
   permissions: Permission[];
+  position: number;
   createdAt: Date;
   updatedAt: Date;
   createdBy?: number;

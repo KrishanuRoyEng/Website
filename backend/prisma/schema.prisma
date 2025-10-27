@@ -37,6 +37,7 @@ model CustomRole {
   description String?
   color       String      @default("#6B7280")
   permissions Permission[]
+  position    Int         @default(0) // (higher = higher rank)
   createdAt   DateTime    @default(now()) @map("created_at")
   updatedAt   DateTime    @updatedAt @map("updated_at")
   createdBy   Int?        @map("created_by")

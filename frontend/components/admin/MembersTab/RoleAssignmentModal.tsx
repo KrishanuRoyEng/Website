@@ -29,8 +29,22 @@ export default function RoleAssignmentModal({
 
   const loadCustomRoles = async () => {
     try {
-      const res = await adminApi.getCustomRoles();
-      setCustomRoles(res.data);
+      const response = await adminApi.getCustomRoles();
+      
+      const responseData = response.data;
+      
+      let rolesData: CustomRole[] = [];
+      
+      if (Array.isArray(responseData)) {
+        rolesData = responseData;
+      } else if (responseData && Array.isArray(responseData.data)) {
+        rolesData = responseData.data;
+      } else if (responseData && Array.isArray(responseData.roles)) {
+        rolesData = responseData.roles;
+      }
+      
+      console.log('Custom roles in modal:', rolesData);
+      setCustomRoles(rolesData);
     } catch (error) {
       console.error("Failed to load custom roles:", error);
     }
@@ -103,7 +117,7 @@ export default function RoleAssignmentModal({
               }`}
             >
               <option value="">No Custom Role</option>
-              {customRoles.map((role) => (
+              {Array.isArray(customRoles) && customRoles.map((role) => (
                 <option key={role.id} value={role.id}>
                   {role.name}
                 </option>
@@ -123,7 +137,7 @@ export default function RoleAssignmentModal({
                 Role Permissions
               </h4>
               <p className="text-xs text-slate-400">
-                {customRoles.find(r => r.id === selectedCustomRole)?.permissions.join(", ")}
+                {customRoles.find(r => r.id === selectedCustomRole)?.permissions?.join(", ") || "No permissions specified"}
               </p>
             </div>
           )}

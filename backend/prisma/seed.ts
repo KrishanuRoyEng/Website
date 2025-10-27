@@ -79,7 +79,8 @@ async function main() {
         Permission.MANAGE_MEMBERS,
         Permission.MANAGE_PROJECTS,
         Permission.MANAGE_EVENTS,
-      ]
+      ],
+      position: 100
     },
     {
       name: "Content Manager",
@@ -91,7 +92,8 @@ async function main() {
         Permission.MANAGE_EVENTS,
         Permission.MANAGE_SKILLS,
         Permission.MANAGE_TAGS,
-      ]
+      ],
+      position: 90
     },
     {
       name: "Project Reviewer",
@@ -100,7 +102,8 @@ async function main() {
       permissions: [
         Permission.VIEW_DASHBOARD,
         Permission.MANAGE_PROJECTS,
-      ]
+      ],
+      position: 80
     },
     {
       name: "Event Coordinator",
@@ -109,7 +112,8 @@ async function main() {
       permissions: [
         Permission.VIEW_DASHBOARD,
         Permission.MANAGE_EVENTS,
-      ]
+      ],
+      position: 70
     },
     {
       name: "Tech Lead",
@@ -120,7 +124,8 @@ async function main() {
         Permission.MANAGE_PROJECTS,
         Permission.MANAGE_SKILLS,
         Permission.MANAGE_TAGS,
-      ]
+      ],
+      position: 60
     },
     {
       name: "Community Manager",
@@ -130,7 +135,8 @@ async function main() {
         Permission.VIEW_DASHBOARD,
         Permission.MANAGE_MEMBERS,
         Permission.MANAGE_EVENTS,
-      ]
+      ],
+      position: 50
     }
   ];
 
@@ -143,12 +149,14 @@ async function main() {
           description: roleData.description,
           color: roleData.color,
           permissions: roleData.permissions,
+          position: roleData.position,
         },
         create: {
           name: roleData.name,
           description: roleData.description,
           color: roleData.color,
           permissions: roleData.permissions,
+          position: roleData.position,
           createdBy: hasSuperadminConfig ? 
             (await prisma.user.findFirst({ where: { role: "ADMIN" } }))?.id : 
             undefined,
