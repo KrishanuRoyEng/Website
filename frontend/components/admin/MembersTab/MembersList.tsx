@@ -1,4 +1,3 @@
-// components/admin/MembersTab/MembersList.tsx
 import { useState, useMemo, useEffect } from "react";
 import { Search, Filter, Users } from "lucide-react";
 import { User, UserRole } from "@/lib/types";
@@ -11,7 +10,7 @@ interface MembersListProps {
   onDataChange: () => void;
   onError: (message: string) => void;
   onSuccess: (message: string) => void;
-  currentUserId: number;
+  currentUser: User;
   showFilters?: boolean;
   onViewMember?: (member: User) => void;
 }
@@ -23,7 +22,7 @@ export default function MembersList({
   onDataChange,
   onError,
   onSuccess,
-  currentUserId,
+  currentUser,
   showFilters = true,
   onViewMember,
 }: MembersListProps) {
@@ -40,9 +39,9 @@ export default function MembersList({
         setLoadingCustomRoles(true);
         const response = await adminApi.getCustomRoles();
         const responseData = response.data;
-        
+
         let rolesData = [];
-        
+
         if (Array.isArray(responseData)) {
           rolesData = responseData;
         } else if (responseData && Array.isArray(responseData.data)) {
@@ -50,8 +49,6 @@ export default function MembersList({
         } else if (responseData && Array.isArray(responseData.roles)) {
           rolesData = responseData.roles;
         }
-        
-        console.log('Custom roles loaded:', rolesData);
         setCustomRoles(rolesData);
       } catch (error) {
         console.error("Failed to load custom roles:", error);
@@ -70,18 +67,18 @@ export default function MembersList({
     if (!users || !Array.isArray(users)) {
       return [];
     }
-    
+
     return users.filter((user) => {
       if (!user || !user.id) return false;
 
       const matchesSearch =
         user.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.member?.fullName?.toLowerCase().includes(searchQuery.toLowerCase());
+        user.member?.fullName
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase());
 
-      const matchesRole =
-        roleFilter === "all" ||
-        user.role === roleFilter;
+      const matchesRole = roleFilter === "all" || user.role === roleFilter;
 
       const matchesCustomRole =
         customRoleFilter === "all" ||
@@ -95,11 +92,14 @@ export default function MembersList({
   // Pagination
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedUsers = filteredUsers.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -171,8 +171,8 @@ export default function MembersList({
             {loadingCustomRoles ? (
               <option disabled>Loading custom roles...</option>
             ) : (
-              // Safe mapping with Array.isArray check
-              Array.isArray(customRoles) && customRoles.map((role) => (
+              Array.isArray(customRoles) &&
+              customRoles.map((role) => (
                 <option key={role.id} value={role.id.toString()}>
                   {role.name}
                 </option>
@@ -185,18 +185,20 @@ export default function MembersList({
       {/* Members Grid */}
       <div className="space-y-3">
         {paginatedUsers
-          .filter(user => user && user.id)
-          .map((user) => (
-            <MemberCard
-              key={user.id}
-              user={user}
-              onDataChange={onDataChange}
-              onError={onError}
-              onSuccess={onSuccess}
-              currentUserId={currentUserId}
-              onViewMember={onViewMember}
-            />
-          ))}
+          .filter((user) => user && user.id)
+          .map((user) => {
+            return (
+              <MemberCard
+                key={user.id}
+                user={user}
+                onDataChange={onDataChange}
+                onError={onError}
+                onSuccess={onSuccess}
+                currentUser={currentUser}
+                onViewMember={onViewMember}
+              />
+            );
+          })}
       </div>
 
       {/* Empty State */}

@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../types';
 import { UserService } from '../services/user.service';
-import { canModifyUser, toUserForHierarchy } from '../utils/role-hierarchy';
+import { canAssignAdminRole, canModifyUser, toUserForHierarchy } from '../utils/role-hierarchy';
 
 /**
  * Middleware to check if user can modify target user based on role hierarchy
@@ -39,6 +39,44 @@ export const canModifyTargetUser = async (req: AuthRequest, res: Response, next:
     return res.status(500).json({ error: 'Server error while checking permissions' });
   }
 };
+
+/**
+ * Middleware to check if user can assign the requested role to target user
+ */
+export const canAssignRoleToUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+
+  const targetUserId = parseInt(req.params.userId);
+  const { role } = req.body;
+
+  // Don't block if no userId in params or no role change
+  if (!targetUserId || !role) {
+    return next();
+  }
+
+  try {
+    const targetUser = await UserService.findById(targetUserId);
+
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const actingUser = toUserForHierarchy(req.user);
+    const targetUserForHierarchy = toUserForHierarchy(targetUser);
+
+    if (!canAssignAdminRole(actingUser, targetUserForHierarchy, role)) {
+      return res.status(403).json({ 
+        error: 'Insufficient permissions to assign this role' 
+      });
+    }
+
+    next();
+  } catch (error) {
+    return res.status(500).json({ error: 'Server error while checking role assignment permissions' });
+  }
+}
 
 /**
  * Middleware to check if user can manage a specific role

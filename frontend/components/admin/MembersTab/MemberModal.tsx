@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { User, CustomRole } from "@/lib/types";
 import { adminApi } from "@/lib/api";
+import { canManageCustomRole } from "@/lib/permissions";
 import { X, Mail, Github, Calendar, CheckCircle, XCircle, User as UserIcon, AlertTriangle } from "lucide-react";
 
 interface MemberModalProps {
@@ -10,6 +11,7 @@ interface MemberModalProps {
   onApprove: (customRoleId?: number) => void;
   onReject: (reason: string) => void;
   currentUserId: number;
+  currentUser: User; // Add currentUser prop
 }
 
 export default function MemberModal({
@@ -19,11 +21,13 @@ export default function MemberModal({
   onApprove,
   onReject,
   currentUserId,
+  currentUser, // Add currentUser
 }: MemberModalProps) {
   const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
   const [selectedCustomRole, setSelectedCustomRole] = useState<number | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectionForm, setShowRejectionForm] = useState(false);
+  const [rolesLoading, setRolesLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen && user.role === "PENDING") {
@@ -37,6 +41,7 @@ export default function MemberModal({
 
   const loadCustomRoles = async () => {
     try {
+      setRolesLoading(true);
       const response = await adminApi.getCustomRoles();
       
       // Handle the Axios response structure
@@ -56,8 +61,15 @@ export default function MemberModal({
       setCustomRoles(rolesData);
     } catch (error) {
       console.error("Failed to load custom roles:", error);
+    } finally {
+      setRolesLoading(false);
     }
   };
+
+  // Filter custom roles to only those the current user can manage
+  const manageableCustomRoles = customRoles.filter(role => 
+    canManageCustomRole(currentUser, role)
+  );
 
   const handleApprove = () => {
     onApprove(selectedCustomRole || undefined);
@@ -244,19 +256,39 @@ export default function MemberModal({
                     <label className="block text-sm font-medium text-slate-300 mb-2">
                       Assign Custom Role (Optional)
                     </label>
-                    <select
-                      value={selectedCustomRole || ""}
-                      onChange={(e) => setSelectedCustomRole(e.target.value ? Number(e.target.value) : null)}
-                      className="w-full p-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
-                    >
-                      <option value="">Regular Member</option>
-                      {/* Safe array mapping */}
-                      {Array.isArray(customRoles) && customRoles.map((role) => (
-                        <option key={role.id} value={role.id}>
-                          {role.name}
-                        </option>
-                      ))}
-                    </select>
+                    
+                    {rolesLoading ? (
+                      <div className="p-3 bg-slate-700/50 rounded-lg border border-slate-600 text-center">
+                        <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto"></div>
+                        <p className="text-xs text-slate-400 mt-2">Loading roles...</p>
+                      </div>
+                    ) : (
+                      <select
+                        value={selectedCustomRole || ""}
+                        onChange={(e) => setSelectedCustomRole(e.target.value ? Number(e.target.value) : null)}
+                        className="w-full p-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
+                      >
+                        <option value="">Regular Member</option>
+                        {/* Only show manageable roles */}
+                        {manageableCustomRoles.map((role) => (
+                          <option key={role.id} value={role.id}>
+                            {role.name} (Position: {role.position})
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    
+                    {manageableCustomRoles.length === 0 && customRoles.length > 0 && !rolesLoading && (
+                      <p className="text-xs text-yellow-400 mt-2">
+                        No custom roles available to assign (all roles are equal or higher than your position)
+                      </p>
+                    )}
+                    
+                    {manageableCustomRoles.length > 0 && (
+                      <p className="text-xs text-slate-400 mt-1">
+                        You can assign roles with position lower than your current position
+                      </p>
+                    )}
                   </div>
 
                   {/* Action Buttons */}

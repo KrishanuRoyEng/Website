@@ -1,17 +1,24 @@
-import Layout from '@/components/Layout';
-import EventCard from '@/components/EventCard';
-import MemberCard from '@/components/MemberCard';
-import { eventApi, memberApi, projectApi } from '@/lib/api';
-import { Event, Member } from '@/lib/types';
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { MessageSquarePlus, Users, Code, Calendar } from 'lucide-react';
+import Layout from "@/components/Layout";
+import EventCard from "@/components/EventCard";
+import LeadsCarousel from "@/components/LeadsCarousel";
+import { eventApi, memberApi, projectApi } from "@/lib/api";
+import { Event, Member } from "@/lib/types";
+import { useEffect, useState, useRef } from "react";
+import Link from "next/link";
+import {
+  MessageSquarePlus,
+  Users,
+  Code,
+  Calendar,
+  ChevronDown,
+  MessageSquare,
+} from "lucide-react";
 
 export default function Home() {
   const [featuredEvents, setFeaturedEvents] = useState<Event[]>([]);
   const [leads, setLeads] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // Live stats
   const [stats, setStats] = useState({
     members: 0,
@@ -24,31 +31,45 @@ export default function Home() {
     events: 0,
   });
 
+  const statsSectionRef = useRef<HTMLDivElement>(null);
+
+  const scrollToStats = () => {
+    statsSectionRef.current?.scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'start'
+    });
+  };
+
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [eventsRes, membersRes, projectsRes, allEventsRes] = await Promise.all([
-          eventApi.getAll({ featuredOnly: true }).catch(err => {
-            console.error('Featured Events API error:', err);
-            return { data: [] };
-          }),
-          memberApi.getAll({ approvedOnly: true }).catch(err => {
-            console.error('Members API error:', err);
-            return { data: [] };
-          }),
-          projectApi.getAll({ approvedOnly: true }).catch(err => {
-            console.error('Projects API error:', err);
-            return { data: [] };
-          }),
-          eventApi.getAll().catch(err => {
-            console.error('All Events API error:', err);
-            return { data: [] };
-          }),
-        ]);
+        const [eventsRes, membersRes, projectsRes, allEventsRes] =
+          await Promise.all([
+            eventApi.getAll({ featuredOnly: true }).catch((err) => {
+              console.error("Featured Events API error:", err);
+              return { data: [] };
+            }),
+            memberApi.getAll({ approvedOnly: true }).catch((err) => {
+              console.error("Members API error:", err);
+              return { data: [] };
+            }),
+            projectApi.getAll({ approvedOnly: true }).catch((err) => {
+              console.error("Projects API error:", err);
+              return { data: [] };
+            }),
+            eventApi.getAll().catch((err) => {
+              console.error("All Events API error:", err);
+              return { data: [] };
+            }),
+          ]);
 
         setFeaturedEvents(eventsRes.data?.slice(0, 3) || []);
-        setLeads(membersRes.data?.filter((m: Member) => m.user.isLead).slice(0, 4) || []);
-        
+
+        // Filter leads and ensure user ID 1 is included if they are a lead
+        const allLeads =
+          membersRes.data?.filter((m: Member) => m.user.isLead) || [];
+        setLeads(allLeads.slice(0, 6)); // Limit to 6 leads for carousel
+
         // Set real stats
         setStats({
           members: membersRes.data?.length || 0,
@@ -56,7 +77,7 @@ export default function Home() {
           events: allEventsRes.data?.length || 0,
         });
       } catch (error) {
-        console.error('Error loading home data:', error);
+        console.error("Error loading home data:", error);
       } finally {
         setLoading(false);
       }
@@ -67,9 +88,10 @@ export default function Home() {
 
   // Animate stats counting up
   useEffect(() => {
-    if (stats.members === 0 && stats.projects === 0 && stats.events === 0) return;
+    if (stats.members === 0 && stats.projects === 0 && stats.events === 0)
+      return;
 
-    const duration = 2000; // 2 seconds
+    const duration = 2000;
     const steps = 60;
     const interval = duration / steps;
 
@@ -114,109 +136,158 @@ export default function Home() {
           Build Together, Create Amazing
         </h1>
         <p className="section-subtitle max-w-2xl mx-auto animate-fade-in-delay">
-          A community of passionate developers collaborating on innovative projects, sharing knowledge, and growing together.
+          A community of passionate developers collaborating on innovative
+          projects, sharing knowledge, and growing together.
         </p>
-
+        <br></br>
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8 animate-fade-in-delay-2">
-          <Link href="/members" className="btn-primary group">
-            <Users size={20} className="group-hover:scale-110 transition-transform" />
-            Explore Members
+        <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center animate-fade-in-delay-2 px-4">
+          <Link
+            href="/members"
+            className="btn-primary group w-full sm:w-auto justify-center"
+          >
+            <Users
+              size={20}
+              className="group-hover:scale-110 transition-transform"
+            />
+            <span>Explore Members</span>
           </Link>
-          <Link href="/projects" className="btn-outline group">
-            <Code size={20} className="group-hover:rotate-12 transition-transform" />
-            View Projects
+          <Link
+            href="/projects"
+            className="btn-outline group w-full sm:w-auto justify-center"
+          >
+            <Code
+              size={20}
+              className="group-hover:rotate-12 transition-transform"
+            />
+            <span>View Projects</span>
           </Link>
+        </div>
+
+        {/* Scroll indicator for mobile */}
+        <div 
+          className="mt-12 md:mt-16 animate-bounce cursor-pointer group"
+          onClick={scrollToStats}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              scrollToStats();
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-label="Scroll to statistics section"
+        >
+          <ChevronDown 
+            size={24} 
+            className="mx-auto text-slate-400 group-hover:text-accent transition-colors duration-300" 
+          />
         </div>
       </section>
 
       {/* Live Stats Section */}
-      <section className="container-custom py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <section ref= {statsSectionRef} className="container-custom py-8 md:py-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           {/* Members Stat */}
-          <div className="card p-8 text-center hover:shadow-2xl hover:scale-105 transition-all duration-300 group">
+          <div className="card p-6 md:p-8 text-center hover:shadow-2xl hover:scale-105 transition-all duration-300 group">
             <div className="relative">
-              <Users 
-                size={48} 
-                className="mx-auto text-primary mb-4 group-hover:scale-110 transition-transform" 
+              <Users
+                size={40}
+                className="mx-auto text-primary mb-3 md:mb-4 group-hover:scale-110 transition-transform"
               />
               <div className="absolute inset-0 bg-primary/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </div>
-            <h3 className="text-5xl font-bold text-white mb-2 tabular-nums">
+            <h3 className="text-3xl md:text-5xl font-bold text-white mb-1 md:mb-2 tabular-nums">
               {loading ? (
                 <span className="inline-block animate-pulse">...</span>
               ) : (
                 <>{animatedStats.members}+</>
               )}
             </h3>
-            <p className="text-slate-400 font-medium">Active Members</p>
-            <div className="mt-4 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <p className="text-slate-400 text-sm md:text-base font-medium">
+              Active Members
+            </p>
+            <div className="mt-3 md:mt-4 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           </div>
 
           {/* Projects Stat */}
-          <div className="card p-8 text-center hover:shadow-2xl hover:scale-105 transition-all duration-300 group">
+          <div className="card p-6 md:p-8 text-center hover:shadow-2xl hover:scale-105 transition-all duration-300 group">
             <div className="relative">
-              <Code 
-                size={48} 
-                className="mx-auto text-secondary mb-4 group-hover:scale-110 transition-transform" 
+              <Code
+                size={40}
+                className="mx-auto text-secondary mb-3 md:mb-4 group-hover:scale-110 transition-transform"
               />
               <div className="absolute inset-0 bg-secondary/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </div>
-            <h3 className="text-5xl font-bold text-white mb-2 tabular-nums">
+            <h3 className="text-3xl md:text-5xl font-bold text-white mb-1 md:mb-2 tabular-nums">
               {loading ? (
                 <span className="inline-block animate-pulse">...</span>
               ) : (
                 <>{animatedStats.projects}+</>
               )}
             </h3>
-            <p className="text-slate-400 font-medium">Projects Showcased</p>
-            <div className="mt-4 h-1 bg-gradient-to-r from-transparent via-secondary to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <p className="text-slate-400 text-sm md:text-base font-medium">
+              Projects Showcased
+            </p>
+            <div className="mt-3 md:mt-4 h-1 bg-gradient-to-r from-transparent via-secondary to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           </div>
 
           {/* Events Stat */}
-          <div className="card p-8 text-center hover:shadow-2xl hover:scale-105 transition-all duration-300 group">
+          <div className="card p-6 md:p-8 text-center hover:shadow-2xl hover:scale-105 transition-all duration-300 group">
             <div className="relative">
-              <Calendar 
-                size={48} 
-                className="mx-auto text-accent mb-4 group-hover:scale-110 transition-transform" 
+              <Calendar
+                size={40}
+                className="mx-auto text-accent mb-3 md:mb-4 group-hover:scale-110 transition-transform"
               />
               <div className="absolute inset-0 bg-accent/10 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </div>
-            <h3 className="text-5xl font-bold text-white mb-2 tabular-nums">
+            <h3 className="text-3xl md:text-5xl font-bold text-white mb-1 md:mb-2 tabular-nums">
               {loading ? (
                 <span className="inline-block animate-pulse">...</span>
               ) : (
                 <>{animatedStats.events}+</>
               )}
             </h3>
-            <p className="text-slate-400 font-medium">Events Hosted</p>
-            <div className="mt-4 h-1 bg-gradient-to-r from-transparent via-accent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <p className="text-slate-400 text-sm md:text-base font-medium">
+              Events Hosted
+            </p>
+            <div className="mt-3 md:mt-4 h-1 bg-gradient-to-r from-transparent via-accent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
           </div>
         </div>
       </section>
 
       {/* Featured Events */}
-      <section className="container-custom py-20">
-        <div className="mb-12">
-          <div className="flex items-center gap-3 mb-2">
-            <Calendar size={28} className="text-accent animate-pulse" />
-            <h2 className="section-title">Featured Events</h2>
+      <section className="container-custom py-12 md:py-20">
+        <div className="mb-8 md:mb-12 px-4">
+          <div className="flex items-center gap-3 mb-2 justify-center md:justify-start">
+            <Calendar
+              size={24}
+              className="md:size-7 text-accent animate-pulse"
+            />
+            <h2 className="text-2xl md:text-4xl font-bold text-white">
+              Featured Events
+            </h2>
           </div>
-          <p className="section-subtitle">Don&apos;t miss our upcoming events and workshops</p>
+          <p className="text-slate-300 text-center md:text-left text-base md:text-xl">
+            Don&apos;t miss our upcoming events and workshops
+          </p>
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 px-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="card h-96 animate-pulse bg-gradient-to-br from-slate-800 to-slate-900" />
+              <div
+                key={i}
+                className="card h-64 md:h-96 animate-pulse bg-gradient-to-br from-slate-800 to-slate-900"
+              />
             ))}
           </div>
         ) : featuredEvents.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8 px-4">
               {featuredEvents.map((event, index) => (
-                <div 
-                  key={event.id} 
+                <div
+                  key={event.id}
                   className="animate-fade-in"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
@@ -224,64 +295,59 @@ export default function Home() {
                 </div>
               ))}
             </div>
-            <div className="text-center">
-              <Link href="/events" className="btn-primary group">
+            <div className="text-center px-4">
+              <Link
+                href="/events"
+                className="btn-primary group w-full sm:w-auto justify-center"
+              >
                 View All Events
-                <svg 
-                  className="w-5 h-5 group-hover:translate-x-1 transition-transform" 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  className="w-5 h-5 group-hover:translate-x-1 transition-transform"
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
                 </svg>
               </Link>
             </div>
           </>
         ) : (
-          <div className="card p-12 text-center">
-            <Calendar size={48} className="mx-auto text-slate-600 mb-4" />
-            <p className="text-slate-400 text-lg">No featured events yet</p>
-            <p className="text-slate-500 text-sm mt-2">Check back soon for exciting workshops and meetups!</p>
+          <div className="card p-8 md:p-12 text-center mx-4">
+            <Calendar
+              size={40}
+              className="md:size-12 mx-auto text-slate-600 mb-4"
+            />
+            <p className="text-slate-400 text-base md:text-lg">
+              No featured events yet
+            </p>
+            <p className="text-slate-500 text-sm md:text-base mt-2">
+              Check back soon for exciting workshops and meetups!
+            </p>
           </div>
         )}
       </section>
 
-      {/* Featured Leads */}
-      <section className="container-custom py-20">
-        <div className="mb-12">
-          <div className="flex items-center gap-3 mb-2">
-            <Users size={28} className="text-secondary" />
-            <h2 className="section-title">Meet Our Leads</h2>
+      {/* Meet Our Leads */}
+      <section className="container-custom py-12 md:py-20">
+        <div className="mb-8 md:mb-12 px-4">
+          <div className="flex items-center gap-3 mb-2 justify-center md:justify-start">
+            <Users size={24} className="md:size-7 text-secondary" />
+            <h2 className="text-2xl md:text-4xl font-bold text-white">
+              Meet Our Leads
+            </h2>
           </div>
-          <p className="section-subtitle">Outstanding members driving our community forward</p>
+          <p className="text-slate-300 text-center md:text-left text-base md:text-xl">
+            Outstanding members driving our community forward
+          </p>
         </div>
 
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="card h-64 animate-pulse bg-gradient-to-br from-slate-800 to-slate-900" />
-            ))}
-          </div>
-        ) : leads.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {leads.map((member, index) => (
-              <div 
-                key={member.id} 
-                className="animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <MemberCard member={member} />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="card p-12 text-center">
-            <Users size={48} className="mx-auto text-slate-600 mb-4" />
-            <p className="text-slate-400 text-lg">No leads available yet</p>
-            <p className="text-slate-500 text-sm mt-2">Our community leaders will be featured here soon!</p>
-          </div>
-        )}
+        <LeadsCarousel leads={leads} loading={loading} />
       </section>
 
       <style jsx>{`
@@ -297,11 +363,12 @@ export default function Home() {
         }
 
         @keyframes bounce-slow {
-          0%, 100% {
+          0%,
+          100% {
             transform: translateY(0);
           }
           50% {
-            transform: translateY(-10px);
+            transform: translateY(-5px);
           }
         }
 
@@ -330,6 +397,51 @@ export default function Home() {
 
         .tabular-nums {
           font-variant-numeric: tabular-nums;
+        }
+
+        .perspective-1000 {
+          perspective: 1000px;
+        }
+
+        /* Mobile-first responsive container */
+        .container-custom {
+          width: 100%;
+          margin-left: auto;
+          margin-right: auto;
+          padding-left: 1rem;
+          padding-right: 1rem;
+        }
+
+        @media (min-width: 640px) {
+          .container-custom {
+            max-width: 640px;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+          }
+        }
+
+        @media (min-width: 768px) {
+          .container-custom {
+            max-width: 768px;
+            padding-left: 2rem;
+            padding-right: 2rem;
+          }
+        }
+
+        @media (min-width: 1024px) {
+          .container-custom {
+            max-width: 1024px;
+            padding-left: 2rem;
+            padding-right: 2rem;
+          }
+        }
+
+        @media (min-width: 1280px) {
+          .container-custom {
+            max-width: 1280px;
+            padding-left: 2rem;
+            padding-right: 2rem;
+          }
         }
       `}</style>
     </Layout>

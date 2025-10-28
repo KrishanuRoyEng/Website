@@ -5,6 +5,7 @@ import {
   requirePermission
 } from '../middlewares/auth.middleware';
 import { 
+  canAssignRoleToUser,
   canModifyTargetUser 
 } from '../middlewares/role-hierarchy.middleware';
 import { Permission } from '../types';
@@ -21,7 +22,7 @@ router.get('/leads', requirePermission(Permission.VIEW_DASHBOARD), AdminControll
 
 // Member management - require specific permissions + hierarchy checks
 router.put('/members/:userId/approve', requirePermission(Permission.MANAGE_MEMBERS), canModifyTargetUser, AdminController.approveMember);
-router.put('/users/:userId/role', requirePermission(Permission.MANAGE_MEMBERS), canModifyTargetUser, AdminController.updateUserRole);
+router.put('/users/:userId/role', requirePermission(Permission.MANAGE_MEMBERS), canModifyTargetUser, canAssignRoleToUser, AdminController.updateUserRole);
 router.put('/users/:userId/lead-status', requirePermission(Permission.MANAGE_MEMBERS), canModifyTargetUser, AdminController.setUserLeadStatus);
 
 // Project management - require specific permissions

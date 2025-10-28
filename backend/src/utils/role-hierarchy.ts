@@ -1,7 +1,5 @@
-// lib/utils/role-hierarchy.ts
 import { CustomRole, Permission } from "@prisma/client";
 
-// Use your existing AuthRequest user type
 export interface UserForHierarchy {
   id: number;
   role: string;
@@ -11,6 +9,7 @@ export interface UserForHierarchy {
     description: string | null;
     color: string;
     permissions: Permission[];
+    position: number;
     createdAt: Date;
     updatedAt: Date;
     createdBy?: number;
@@ -24,16 +23,19 @@ export function toUserForHierarchy(user: any): UserForHierarchy {
   return {
     id: user.id,
     role: user.role,
-    customRole: user.customRole ? {
-      id: user.customRole.id,
-      name: user.customRole.name,
-      description: user.customRole.description,
-      color: user.customRole.color,
-      permissions: user.customRole.permissions,
-      createdAt: user.customRole.createdAt,
-      updatedAt: user.customRole.updatedAt,
-      createdBy: user.customRole.createdBy
-    } : null
+    customRole: user.customRole
+      ? {
+          id: user.customRole.id,
+          name: user.customRole.name,
+          description: user.customRole.description,
+          color: user.customRole.color,
+          permissions: user.customRole.permissions,
+          position: user.customRole.position,
+          createdAt: user.customRole.createdAt,
+          updatedAt: user.customRole.updatedAt,
+          createdBy: user.customRole.createdBy,
+        }
+      : null,
   };
 }
 
@@ -42,27 +44,59 @@ export function toUserForHierarchy(user: any): UserForHierarchy {
  */
 export function getUserHighestPosition(user: UserForHierarchy): number {
   if (user.role === "ADMIN") {
+    console.log("    → BACKEND: ADMIN → 999");
     return 999;
   }
-  
+
   if (user.role === "SUSPENDED" || user.role === "PENDING") {
     return -1;
   }
-  
+
   // For MEMBER users with custom roles
   if (user.customRole) {
-    const position = (user.customRole as any)?.position;
+    const position = user.customRole.position;
     return position;
   }
-  
+
+  console.log("    → BACKEND: Regular MEMBER → 0");
   return 0;
+}
+
+/**
+ * Check if acting user can assign ADMIN role to target user
+ */
+export function canAssignAdminRole(
+  actingUser: UserForHierarchy,
+  targetUser: UserForHierarchy,
+  newRole: string
+): boolean {
+  // Only ADMINS can assign ADMIN role
+  if (newRole === "ADMIN" && actingUser.role !== "ADMIN") {
+    return false;
+  }
+
+  // ADMINS can assign ADMIN role to anyone (except themselves downgrading)
+  if (actingUser.role === "ADMIN") {
+    return true;
+  }
+
+  // For other role assignments, use the normal permission check
+  return canModifyUser(actingUser, targetUser);
 }
 
 /**
  * Check if acting user can modify target user
  */
-export function canModifyUser(actingUser: UserForHierarchy, targetUser: UserForHierarchy): boolean {
-  // ADMIN users are untouchable by anyone
+export function canModifyUser(
+  actingUser: UserForHierarchy,
+  targetUser: UserForHierarchy
+): boolean {
+  // ADMIN can modify anyone
+  if (actingUser.role === "ADMIN") {
+    return true;
+  }
+
+  // Non-ADMIN users cannot modify ADMIN users
   if (targetUser.role === "ADMIN") {
     return false;
   }
@@ -70,23 +104,25 @@ export function canModifyUser(actingUser: UserForHierarchy, targetUser: UserForH
   const actingPosition = getUserHighestPosition(actingUser);
   const targetPosition = getUserHighestPosition(targetUser);
 
-  // User can modify users with LOWER position numbers (LOWER authority)
-  return targetPosition < actingPosition;
+  const result = targetPosition < actingPosition;
+
+  return result;
 }
 
 /**
  * Check if user can manage a specific role (create, update, delete, reorder)
  */
-export function canManageRole(actingUser: UserForHierarchy, targetRole: CustomRole & { position: number }): boolean {
+export function canManageRole(
+  actingUser: UserForHierarchy,
+  targetRole: CustomRole & { position: number }
+): boolean {
   const actingPosition = getUserHighestPosition(actingUser);
-  
+
   if (actingUser.role === "ADMIN") {
-    console.log(`  - ADMIN user, allowing access`);
     return true;
   }
-  
+
   const result = targetRole.position < actingPosition;
-  console.log(`  - Final result: ${result}`);
   return result;
 }
 
@@ -95,7 +131,7 @@ export function canManageRole(actingUser: UserForHierarchy, targetRole: CustomRo
  */
 export function canReorderRoles(actingUser: UserForHierarchy): boolean {
   const userPosition = getUserHighestPosition(actingUser);
-  
+
   // Allow anyone except suspended/pending users to reorder
   // But only for roles they can manage
   return userPosition > -1; // Not suspended or pending
@@ -104,16 +140,19 @@ export function canReorderRoles(actingUser: UserForHierarchy): boolean {
 /**
  * Get all roles that a user can manage
  */
-export function getManageableRoles(actingUser: UserForHierarchy, allRoles: (CustomRole & { position: number })[]): (CustomRole & { position: number })[] {
+export function getManageableRoles(
+  actingUser: UserForHierarchy,
+  allRoles: (CustomRole & { position: number })[]
+): (CustomRole & { position: number })[] {
   const actingPosition = getUserHighestPosition(actingUser);
-  
-  const manageable = allRoles.filter(role => {
+
+  const manageable = allRoles.filter((role) => {
     const canManage = canManageRole(actingUser, role);
-    console.log(`- ${role.name} (ID: ${role.id}, Pos: ${role.position}): canManage = ${canManage}`);
+    console.log(
+      `- ${role.name} (ID: ${role.id}, Pos: ${role.position}): canManage = ${canManage}`
+    );
     return canManage;
   });
-  
-  
+
   return manageable;
 }
-

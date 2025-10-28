@@ -1,4 +1,3 @@
-// components/admin/roles/RoleUsersModal.tsx
 import { User } from "@/lib/types";
 import { X, User as UserIcon, ExternalLink } from "lucide-react";
 

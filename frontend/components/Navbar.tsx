@@ -1,10 +1,16 @@
+'use client';
+
 import Link from "next/link";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Menu, X, LogOut, LogIn, User } from "lucide-react";
 import { useState } from "react";
 import { Permission } from "../lib/types";
 
-export default function Navbar() {
+interface NavbarProps {
+  navbarStyle: string;
+}
+
+export default function Navbar({ navbarStyle }: NavbarProps) {
   const { data: session } = useSession();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -36,7 +42,7 @@ export default function Navbar() {
   const canAccessAdmin = hasAdminAccess();
 
   return (
-    <nav className="bg-slate-900/50 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50">
+    <nav className={`bg-slate-900/50 backdrop-blur-md border-b border-slate-700 sticky top-0 z-50 ${navbarStyle}`}>
       <div className="container-custom">
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
@@ -50,28 +56,32 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-6 lg:gap-8 ml-8">
             <Link
               href="/members"
-              className="text-slate-300 hover:text-primary transition-colors whitespace-nowrap"
+              className="text-slate-300 hover:text-primary transition-colors whitespace-nowrap relative group"
             >
               Members
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </Link>
             <Link
               href="/projects"
-              className="text-slate-300 hover:text-primary transition-colors whitespace-nowrap"
+              className="text-slate-300 hover:text-primary transition-colors whitespace-nowrap relative group"
             >
               Projects
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </Link>
             <Link
               href="/events"
-              className="text-slate-300 hover:text-primary transition-colors whitespace-nowrap"
+              className="text-slate-300 hover:text-primary transition-colors whitespace-nowrap relative group"
             >
               Events
+              <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
             </Link>
             {canAccessAdmin && (
               <Link
                 href="/admin"
-                className="text-slate-300 hover:text-accent transition-colors whitespace-nowrap"
+                className="text-slate-300 hover:text-accent transition-colors whitespace-nowrap relative group"
               >
                 Admin
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-accent transition-all duration-300 group-hover:w-full"></span>
               </Link>
             )}
           </div>
@@ -89,7 +99,7 @@ export default function Navbar() {
                   <img
                     src={session.user?.image || "/avatar.png"}
                     alt="Avatar"
-                    className="w-8 h-8 rounded-full flex-shrink-0"
+                    className="w-8 h-8 rounded-full flex-shrink-0 border-2 border-transparent group-hover:border-primary transition-colors"
                   />
                   <span className="truncate max-w-[120px]">
                     {session.user?.name}
@@ -97,7 +107,7 @@ export default function Navbar() {
                 </Link>
                 <button
                   onClick={handleSignOut}
-                  className="btn-secondary flex items-center gap-2 whitespace-nowrap flex-shrink-0"
+                  className="btn-secondary flex items-center gap-2 whitespace-nowrap flex-shrink-0 hover:scale-105 transition-transform duration-200"
                 >
                   <LogOut size={16} />
                   Sign Out
@@ -106,7 +116,7 @@ export default function Navbar() {
             ) : (
               <button
                 onClick={handleSignIn}
-                className="btn-primary flex items-center gap-2 whitespace-nowrap"
+                className="btn-primary flex items-center gap-2 whitespace-nowrap hover:scale-105 transition-transform duration-200"
               >
                 <LogIn size={16} />
                 Sign In
@@ -117,7 +127,8 @@ export default function Navbar() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 hover:bg-slate-800 rounded-lg flex-shrink-0"
+            className="md:hidden p-2 hover:bg-slate-800 rounded-lg flex-shrink-0 transition-colors duration-200"
+            aria-label="Toggle menu"
           >
             {isOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -125,26 +136,26 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="md:hidden pb-4 space-y-3 border-t border-slate-700 pt-4">
+          <div className="md:hidden pb-4 space-y-3 border-t border-slate-700 pt-4 animate-slideDown">
             {/* Mobile Menu Links */}
             <Link
               href="/members"
               onClick={() => setIsOpen(false)}
-              className="block text-slate-300 hover:text-primary transition-colors py-2"
+              className="block text-slate-300 hover:text-primary transition-colors py-2 border-l-2 border-transparent hover:border-primary hover:pl-3 transition-all duration-300"
             >
               Members
             </Link>
             <Link
               href="/projects"
               onClick={() => setIsOpen(false)}
-              className="block text-slate-300 hover:text-primary transition-colors py-2"
+              className="block text-slate-300 hover:text-primary transition-colors py-2 border-l-2 border-transparent hover:border-primary hover:pl-3 transition-all duration-300"
             >
               Projects
             </Link>
             <Link
               href="/events"
               onClick={() => setIsOpen(false)}
-              className="block text-slate-300 hover:text-primary transition-colors py-2"
+              className="block text-slate-300 hover:text-primary transition-colors py-2 border-l-2 border-transparent hover:border-primary hover:pl-3 transition-all duration-300"
             >
               Events
             </Link>
@@ -152,7 +163,7 @@ export default function Navbar() {
               <Link
                 href="/admin"
                 onClick={() => setIsOpen(false)}
-                className="block text-slate-300 hover:text-accent transition-colors py-2"
+                className="block text-slate-300 hover:text-accent transition-colors py-2 border-l-2 border-transparent hover:border-accent hover:pl-3 transition-all duration-300"
               >
                 Admin
               </Link>
@@ -164,7 +175,7 @@ export default function Navbar() {
                 <img
                   src={session.user?.image || "/avatar.png"}
                   alt="Avatar"
-                  className="w-10 h-10 rounded-full"
+                  className="w-10 h-10 rounded-full border-2 border-primary"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-white font-medium truncate">
@@ -188,7 +199,7 @@ export default function Navbar() {
                   handleSignOut();
                   setIsOpen(false);
                 }}
-                className="btn-secondary w-full flex items-center justify-center gap-2 py-3"
+                className="btn-secondary w-full flex items-center justify-center gap-2 py-3 hover:scale-105 transition-transform duration-200"
               >
                 <LogOut size={16} />
                 Sign Out
@@ -199,7 +210,7 @@ export default function Navbar() {
                   handleSignIn();
                   setIsOpen(false);
                 }}
-                className="btn-primary w-full flex items-center justify-center gap-2 py-3"
+                className="btn-primary w-full flex items-center justify-center gap-2 py-3 hover:scale-105 transition-transform duration-200"
               >
                 <LogIn size={16} />
                 Sign In with GitHub
@@ -208,6 +219,22 @@ export default function Navbar() {
           </div>
         )}
       </div>
+
+      <style jsx>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-slideDown {
+          animation: slideDown 0.3s ease-out forwards;
+        }
+      `}</style>
     </nav>
   );
 }

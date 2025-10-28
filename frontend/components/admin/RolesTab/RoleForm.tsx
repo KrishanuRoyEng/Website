@@ -1,4 +1,3 @@
-// components/admin/roles/RoleForm.tsx
 import { useState } from "react";
 import { CustomRole, Permission } from "@/lib/types";
 import { Save, X, Shield } from "lucide-react";

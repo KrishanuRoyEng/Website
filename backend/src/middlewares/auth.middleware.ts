@@ -1,7 +1,7 @@
-import { Response, NextFunction } from 'express';
-import { AuthRequest, Permission } from '../types';
-import { verifyToken } from '../utils/auth';
-import { UserService } from '../services/user.service';
+import { Response, NextFunction } from "express";
+import { AuthRequest, Permission } from "../types";
+import { verifyToken } from "../utils/auth";
+import { UserService } from "../services/user.service";
 
 export const authenticate = async (
   req: AuthRequest,
@@ -11,8 +11,8 @@ export const authenticate = async (
   try {
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No token provided' });
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "No token provided" });
     }
 
     const token = authHeader.substring(7);
@@ -21,7 +21,7 @@ export const authenticate = async (
     const user = await UserService.findById(payload.userId);
 
     if (!user) {
-      return res.status(401).json({ error: 'User not found' });
+      return res.status(401).json({ error: "User not found" });
     }
 
     req.user = {
@@ -32,7 +32,7 @@ export const authenticate = async (
 
     next();
   } catch (error) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    return res.status(401).json({ error: "Invalid or expired token" });
   }
 };
 
@@ -43,18 +43,20 @@ export const requireActive = async (
 ) => {
   try {
     if (!req.user) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return res.status(401).json({ error: "Authentication required" });
     }
 
     const user = await UserService.findById(req.user.id);
 
     if (!user || !user.isActive) {
-      return res.status(403).json({ error: 'Account is not active. Awaiting admin approval.' });
+      return res
+        .status(403)
+        .json({ error: "Account is not active. Awaiting admin approval." });
     }
 
     next();
   } catch (error) {
-    return res.status(500).json({ error: 'Server error' });
+    return res.status(500).json({ error: "Server error" });
   }
 };
 
@@ -65,11 +67,11 @@ export const requireAdmin = (
   next: NextFunction
 ) => {
   if (!req.user) {
-    return res.status(401).json({ error: 'Authentication required' });
+    return res.status(401).json({ error: "Authentication required" });
   }
 
   // ADMIN role has full access
-  if (req.user.role === 'ADMIN') {
+  if (req.user.role === "ADMIN") {
     return next();
   }
 
@@ -78,39 +80,51 @@ export const requireAdmin = (
     return next();
   }
 
-  return res.status(403).json({ error: 'Admin access required' });
+  return res.status(403).json({ error: "Admin access required" });
 };
 
 // More specific permission-based middleware
-export const requirePermission = (permission: Permission) => {
+export const requirePermission = (permissions: Permission | Permission[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return res.status(401).json({ error: "Authentication required" });
     }
+
+    const user = req.user as any;
 
     // ADMIN has all permissions
-    if (req.user.role === 'ADMIN') {
+    if (user.role === "ADMIN") {
       return next();
     }
 
-    // SUSPENDED and PENDING users have no permissions
-    if (req.user.role === 'SUSPENDED' || req.user.role === 'PENDING') {
-      return res.status(403).json({ error: 'Account is not active' });
+    const userPermissions = user.customRole?.permissions || [];
+
+    // Convert single permission to array for consistent handling
+    const requiredPermissions = Array.isArray(permissions)
+      ? permissions
+      : [permissions];
+
+    // Check if user has any of the required permissions
+    const hasPermission = requiredPermissions.some((permission) =>
+      userPermissions.includes(permission)
+    );
+
+    if (!hasPermission) {
+      return res.status(403).json({
+        error: `Insufficient permissions. Required: ${requiredPermissions.join(
+          " or "
+        )}`,
+      });
     }
 
-    // Check custom role permissions
-    if (req.user.customRole?.permissions?.includes(permission)) {
-      return next();
-    }
-
-    return res.status(403).json({ 
-      error: `Permission denied: ${permission} required` 
-    });
+    next();
   };
 };
 
 // Specific middleware for dashboard access
-export const requireDashboardAccess = requirePermission(Permission.VIEW_DASHBOARD);
+export const requireDashboardAccess = requirePermission(
+  Permission.VIEW_DASHBOARD
+);
 
 export const optionalAuth = async (
   req: AuthRequest,
@@ -120,7 +134,7 @@ export const optionalAuth = async (
   try {
     const authHeader = req.headers.authorization;
 
-    if (authHeader && authHeader.startsWith('Bearer ')) {
+    if (authHeader && authHeader.startsWith("Bearer ")) {
       const token = authHeader.substring(7);
       const payload = verifyToken(token);
 

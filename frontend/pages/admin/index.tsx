@@ -3,7 +3,14 @@ import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { adminApi, projectApi, eventApi, skillApi, tagApi } from "@/lib/api";
-import { User, Project, Event, Skill, CustomRole, Permission } from "@/lib/types";
+import {
+  User,
+  Project,
+  Event,
+  Skill,
+  CustomRole,
+  Permission,
+} from "@/lib/types";
 import {
   CheckCircle,
   XCircle,
@@ -49,28 +56,28 @@ export default function AdminDashboard() {
   // Permission checking functions
   const hasAdminAccess = () => {
     if (!session?.user) return false;
-    
-    const user = session.user as any;
-    
+
+    const user = session.user as User;
+
     // If user has ADMIN role
     if (user.role === "ADMIN") return true;
-    
+
     // If user has a custom role with dashboard permission
     if (user.customRole?.permissions?.includes(Permission.VIEW_DASHBOARD)) {
       return true;
     }
-    
+
     return false;
   };
 
   const hasPermission = (permission: Permission) => {
     if (!session?.user) return false;
-    
-    const user = session.user as any;
-    
+
+    const user = session.user as User;
+
     // ADMIN has all permissions
     if (user.role === "ADMIN") return true;
-    
+
     // Check custom role permissions
     return user.customRole?.permissions?.includes(permission) || false;
   };
@@ -80,44 +87,44 @@ export default function AdminDashboard() {
   // Define tabs with required permissions
   const getAvailableTabs = () => {
     const allTabs = [
-      { 
-        id: "members" as TabType, 
-        icon: Users, 
+      {
+        id: "members" as TabType,
+        icon: Users,
         label: "Members",
         permission: Permission.MANAGE_MEMBERS,
-        description: "Manage club members and approvals"
+        description: "Manage club members and approvals",
       },
-      { 
-        id: "projects" as TabType, 
-        icon: FolderOpen, 
+      {
+        id: "projects" as TabType,
+        icon: FolderOpen,
         label: "Projects",
         permission: Permission.MANAGE_PROJECTS,
-        description: "Approve and manage projects"
+        description: "Approve and manage projects",
       },
-      { 
-        id: "events" as TabType, 
-        icon: Calendar, 
+      {
+        id: "events" as TabType,
+        icon: Calendar,
         label: "Events",
         permission: Permission.MANAGE_EVENTS,
-        description: "Manage events and featured content"
+        description: "Manage events and featured content",
       },
-      { 
-        id: "skills" as TabType, 
-        icon: Award, 
+      {
+        id: "skills" as TabType,
+        icon: Award,
         label: "Skills",
         permission: Permission.MANAGE_SKILLS,
-        description: "Manage skill categories and tags"
+        description: "Manage skill categories and tags",
       },
-      { 
-        id: "tags" as TabType, 
-        icon: Tags, 
+      {
+        id: "tags" as TabType,
+        icon: Tags,
         label: "Tags",
         permission: Permission.MANAGE_TAGS,
-        description: "Manage project tags"
+        description: "Manage project tags",
       },
-      { 
-        id: "roles" as TabType, 
-        icon: Shield, 
+      {
+        id: "roles" as TabType,
+        icon: Shield,
         label: "Roles",
         permission: Permission.MANAGE_ROLES,
         description: "Manage custom roles and permissions",
@@ -126,12 +133,12 @@ export default function AdminDashboard() {
     ];
 
     // Filter tabs based on permissions
-    return allTabs.filter(tab => {
+    return allTabs.filter((tab) => {
       // Roles tab is only for full ADMINs(Comment the following out if needed)
       // if (tab.adminOnly) {
       //   return (session?.user as any)?.role === "ADMIN";
       // }
-      
+
       // Other tabs require specific permissions
       return hasPermission(tab.permission);
     });
@@ -141,7 +148,10 @@ export default function AdminDashboard() {
 
   // Set active tab to first available tab if current active tab is not available
   useEffect(() => {
-    if (availableTabs.length > 0 && !availableTabs.find(tab => tab.id === activeTab)) {
+    if (
+      availableTabs.length > 0 &&
+      !availableTabs.find((tab) => tab.id === activeTab)
+    ) {
       setActiveTab(availableTabs[0].id);
     }
   }, [availableTabs, activeTab]);
@@ -252,7 +262,8 @@ export default function AdminDashboard() {
           <Shield className="w-16 h-16 text-red-400 mx-auto mb-4" />
           <h1 className="text-3xl font-bold text-white mb-2">Access Denied</h1>
           <p className="text-slate-400 mb-6">
-            You need admin privileges or dashboard permission to access this page.
+            You need admin privileges or dashboard permission to access this
+            page.
           </p>
           <button onClick={() => signIn()} className="btn-primary px-6 py-2">
             Sign In
@@ -289,7 +300,7 @@ export default function AdminDashboard() {
     },
     {
       label: "Active Admins",
-      value: allUsers.filter(u => u.role === "ADMIN" && u.isActive).length,
+      value: allUsers.filter((u) => u.role === "ADMIN" && u.isActive).length,
       icon: Shield,
       color: "text-purple-400",
       bg: "bg-purple-500/10",
@@ -298,10 +309,9 @@ export default function AdminDashboard() {
   ];
 
   // Filter stats based on permissions
-  const availableStats = stats.filter(stat => 
-    !stat.permission || hasPermission(stat.permission)
+  const availableStats = stats.filter(
+    (stat) => !stat.permission || hasPermission(stat.permission)
   );
-
   return (
     <Layout>
       <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
@@ -314,14 +324,14 @@ export default function AdminDashboard() {
                   Admin Dashboard
                 </h1>
                 <p className="text-slate-400 text-sm mt-1">
-                  {availableTabs.length === 1 
+                  {availableTabs.length === 1
                     ? availableTabs[0].description
-                    : "Manage various aspects of the platform"
-                  }
+                    : "Manage various aspects of the platform"}
                 </p>
                 {availableTabs.length === 0 && (
                   <p className="text-yellow-400 text-sm mt-1">
-                    You have dashboard access but no specific permissions. Contact an administrator.
+                    You have dashboard access but no specific permissions.
+                    Contact an administrator.
                   </p>
                 )}
               </div>
@@ -332,10 +342,9 @@ export default function AdminDashboard() {
                     {session?.user?.name}
                   </p>
                   <p className="text-xs text-slate-400">
-                    {(session?.user as any)?.role === "ADMIN" 
-                      ? "Administrator" 
-                      : (session?.user as any)?.customRole?.name || "Member"
-                    }
+                    {(session?.user as any)?.role === "ADMIN"
+                      ? "Administrator"
+                      : (session?.user as any)?.customRole?.name || "Member"}
                   </p>
                 </div>
                 <img
@@ -358,7 +367,9 @@ export default function AdminDashboard() {
               >
                 <Icon className={`w-6 h-6 mb-2 ${color}`} />
                 <span className="text-sm text-slate-400">{label}</span>
-                <span className="text-xl font-semibold text-white">{value}</span>
+                <span className="text-xl font-semibold text-white">
+                  {value}
+                </span>
               </div>
             ))}
           </section>
@@ -402,63 +413,72 @@ export default function AdminDashboard() {
 
             {/* Tab Content */}
             <section className="container-custom pb-12">
-              {activeTab === "members" && hasPermission(Permission.MANAGE_MEMBERS) && (
-                <MembersTab
-                  pendingMembers={pendingMembers}
-                  allUsers={allUsers}
-                  onSuccess={onSuccess}
-                  onError={onError}
-                  onDataChange={loadData}
-                  currentUserId={(session?.user as any).id}
-                />
-              )}
-              {activeTab === "projects" && hasPermission(Permission.MANAGE_PROJECTS) && (
-                <ProjectsTab
-                  pendingProjects={pendingProjects}
-                  allProjects={allProjects}
-                  onSuccess={onSuccess}
-                  onError={onError}
-                  onDataChange={loadData}
-                />
-              )}
-              {activeTab === "events" && hasPermission(Permission.MANAGE_EVENTS) && (
-                <EventsTab
-                  events={events}
-                  onSuccess={onSuccess}
-                  onError={onError}
-                  onDataChange={loadData}
-                />
-              )}
-              {activeTab === "skills" && hasPermission(Permission.MANAGE_SKILLS) && (
-                <SkillsTab
-                  skills={skills}
-                  onSuccess={onSuccess}
-                  onError={onError}
-                  onDataChange={loadData}
-                />
-              )}
-              {activeTab === "tags" && hasPermission(Permission.MANAGE_TAGS) && (
-                <TagsTab
-                  tags={tags}
-                  onSuccess={onSuccess}
-                  onError={onError}
-                  onDataChange={loadData}
-                />
-              )}
-              {activeTab === "roles" && hasPermission(Permission.MANAGE_ROLES) && (
-                <RolesTab
-                  onSuccess={onSuccess}
-                  onError={onError}
-                  onDataChange={loadData}
-                />
-              )}
+              {activeTab === "members" &&
+                hasPermission(Permission.MANAGE_MEMBERS) && (
+                  <MembersTab
+                    pendingMembers={pendingMembers}
+                    allUsers={allUsers}
+                    onSuccess={onSuccess}
+                    onError={onError}
+                    onDataChange={loadData}
+                    currentUserId={(session?.user as User).id}
+                    currentUser={session?.user as User}
+                  />
+                )}
+              {activeTab === "projects" &&
+                hasPermission(Permission.MANAGE_PROJECTS) && (
+                  <ProjectsTab
+                    pendingProjects={pendingProjects}
+                    allProjects={allProjects}
+                    onSuccess={onSuccess}
+                    onError={onError}
+                    onDataChange={loadData}
+                  />
+                )}
+              {activeTab === "events" &&
+                hasPermission(Permission.MANAGE_EVENTS) && (
+                  <EventsTab
+                    events={events}
+                    onSuccess={onSuccess}
+                    onError={onError}
+                    onDataChange={loadData}
+                  />
+                )}
+              {activeTab === "skills" &&
+                hasPermission(Permission.MANAGE_SKILLS) && (
+                  <SkillsTab
+                    skills={skills}
+                    onSuccess={onSuccess}
+                    onError={onError}
+                    onDataChange={loadData}
+                  />
+                )}
+              {activeTab === "tags" &&
+                hasPermission(Permission.MANAGE_TAGS) && (
+                  <TagsTab
+                    tags={tags}
+                    onSuccess={onSuccess}
+                    onError={onError}
+                    onDataChange={loadData}
+                  />
+                )}
+              {activeTab === "roles" &&
+                hasPermission(Permission.MANAGE_ROLES) && (
+                  <RolesTab
+                    onSuccess={onSuccess}
+                    onError={onError}
+                    onDataChange={loadData}
+                  />
+                )}
             </section>
           </>
         ) : (
           // Show message if user has dashboard access but no specific permissions
           <div className="container-custom py-12 text-center">
             <Lock className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-2">Limited Access</h2>
+            <h2 className="text-2xl font-bold text-white mb-2">
+              Limited Access
+            </h2>
             <p className="text-slate-400 mb-4">
               You have dashboard access but no specific permissions assigned.
             </p>

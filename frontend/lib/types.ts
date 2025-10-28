@@ -38,6 +38,8 @@ export interface User {
   updatedAt: string;
   customRole?: CustomRole;
   member?: Member | null;
+  hasCustomRole?: boolean;
+  customRolePosition?: number;
 }
 
 export interface Member {
