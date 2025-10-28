@@ -140,7 +140,7 @@ export class UserService {
   /**
    * Update user role and status, triggering approval notifications if relevant
    */
-static async updateRole(
+  static async updateRole(
     id: number,
     role: UserRole,
     customRoleId?: number | null,
@@ -166,11 +166,11 @@ static async updateRole(
       updateData.suspensionReason = null;
     }
 
-    // Handle custom role assignment
-    if (role === UserRole.MEMBER && customRoleId) {
-      updateData.customRoleId = customRoleId;
-    } else {
+    // Only clear custom role for SUSPENDED and PENDING users
+    if (role === UserRole.SUSPENDED || role === UserRole.PENDING) {
       updateData.customRoleId = null;
+    } else {
+      updateData.customRoleId = customRoleId;
     }
 
     const updatedUser = await prisma.user.update({
@@ -201,8 +201,11 @@ static async updateRole(
 
     // Notification logic
     const wasPending = existingUser.role === UserRole.PENDING;
-    const isApproved = updatedUser.role === UserRole.MEMBER && updatedUser.isActive;
-    const isRejected = wasPending && role === UserRole.SUSPENDED && reason; // ADD THIS
+    const isApproved =
+      (updatedUser.role === UserRole.MEMBER ||
+        updatedUser.role === UserRole.ADMIN) &&
+      updatedUser.isActive;
+    const isRejected = wasPending && role === UserRole.SUSPENDED && reason;
 
     if (wasPending && isApproved) {
       await notifyUserApproved(updatedUser as unknown as UserWithRelations);

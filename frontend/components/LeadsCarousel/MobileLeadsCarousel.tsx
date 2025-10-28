@@ -8,7 +8,10 @@ interface MobileLeadsCarouselProps {
   loading: boolean;
 }
 
-export default function MobileLeadsCarousel({ leads, loading }: MobileLeadsCarouselProps) {
+export default function MobileLeadsCarousel({
+  leads,
+  loading,
+}: MobileLeadsCarouselProps) {
   const [currentLeadIndex, setCurrentLeadIndex] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
@@ -31,7 +34,9 @@ export default function MobileLeadsCarousel({ leads, loading }: MobileLeadsCarou
   const prevLead = () => {
     if (isTransitioning) return;
     setIsTransitioning(true);
-    setCurrentLeadIndex((prev) => (prev - 1 + sortedLeads.length) % sortedLeads.length);
+    setCurrentLeadIndex(
+      (prev) => (prev - 1 + sortedLeads.length) % sortedLeads.length
+    );
     setTimeout(() => setIsTransitioning(false), 500);
   };
 
@@ -46,7 +51,7 @@ export default function MobileLeadsCarousel({ leads, loading }: MobileLeadsCarou
 
   const handleTouchEnd = () => {
     if (!touchStart || !touchEnd || isTransitioning) return;
-    
+
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > 50;
     const isRightSwipe = distance < -50;
@@ -71,20 +76,20 @@ export default function MobileLeadsCarousel({ leads, loading }: MobileLeadsCarou
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center gap-3 h-80">
+      <div className="flex justify-center items-center gap-4 h-72">
         {/* Left shadow card */}
-        <div className="w-32 h-64 card animate-pulse bg-gradient-to-br from-slate-800 to-slate-900 opacity-60 transform rotate-y-12" />
+        <div className="w-36 h-60 card animate-pulse bg-gradient-to-br from-slate-800 to-slate-900 opacity-60" />
         {/* Center focus card */}
-        <div className="w-40 h-72 card animate-pulse bg-gradient-to-br from-slate-800 to-slate-900" />
+        <div className="w-40 h-64 card animate-pulse bg-gradient-to-br from-slate-800 to-slate-900" />
         {/* Right shadow card */}
-        <div className="w-32 h-64 card animate-pulse bg-gradient-to-br from-slate-800 to-slate-900 opacity-60 transform -rotate-y-12" />
+        <div className="w-36 h-60 card animate-pulse bg-gradient-to-br from-slate-800 to-slate-900 opacity-60" />
       </div>
     );
   }
 
   if (sortedLeads.length === 0) {
     return (
-      <div className="card p-8 text-center h-80 flex items-center justify-center">
+      <div className="card p-6 text-center h-72 flex items-center justify-center">
         <div>
           <p className="text-slate-400 text-base">No leads available yet</p>
           <p className="text-slate-500 text-sm mt-2">
@@ -96,14 +101,15 @@ export default function MobileLeadsCarousel({ leads, loading }: MobileLeadsCarou
   }
 
   // Calculate indices for previous, current, and next cards
-  const prevIndex = (currentLeadIndex - 1 + sortedLeads.length) % sortedLeads.length;
+  const prevIndex =
+    (currentLeadIndex - 1 + sortedLeads.length) % sortedLeads.length;
   const nextIndex = (currentLeadIndex + 1) % sortedLeads.length;
 
   return (
     <div className="relative">
       {/* Carousel Container */}
-      <div 
-        className="relative h-80 flex items-center justify-center overflow-visible mx-auto max-w-sm"
+      <div
+        className="relative h-72 flex items-center justify-center overflow-visible mx-auto max-w-sm"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -113,13 +119,15 @@ export default function MobileLeadsCarousel({ leads, loading }: MobileLeadsCarou
           <div
             className="absolute transition-all duration-500 ease-out z-10"
             style={{
-              transform: 'translateX(-120px) scale(0.85) rotateY(15deg)',
+              transform: "translateX(-120px) scale(0.9)",
               opacity: 0.7,
             }}
           >
-            <div className="w-36 h-64">
-              <div className="relative shadow-xl shadow-slate-900/50">
-                <MemberCard member={sortedLeads[prevIndex]} />
+            <div className="w-36 h-60">
+              <div className="relative shadow-xl shadow-slate-900/50 rounded-xl overflow-hidden">
+                <div className="h-full">
+                  <CompactMemberCard member={sortedLeads[prevIndex]} />
+                </div>
                 <div className="absolute inset-0 bg-slate-900/40 rounded-xl pointer-events-none" />
               </div>
             </div>
@@ -130,12 +138,12 @@ export default function MobileLeadsCarousel({ leads, loading }: MobileLeadsCarou
         <div
           className="absolute transition-all duration-500 ease-out z-20"
           style={{
-            transform: 'translateX(0) scale(1) rotateY(0)',
+            transform: "translateX(0) scale(1)",
           }}
         >
-          <div className="w-44 h-72">
-            <div className="relative shadow-2xl shadow-accent/20">
-              <MemberCard member={sortedLeads[currentLeadIndex]} />
+          <div className="w-40 h-64">
+            <div className="relative shadow-2xl shadow-accent/20 rounded-xl overflow-hidden">
+              <CompactMemberCard member={sortedLeads[currentLeadIndex]} />
             </div>
           </div>
         </div>
@@ -145,13 +153,15 @@ export default function MobileLeadsCarousel({ leads, loading }: MobileLeadsCarou
           <div
             className="absolute transition-all duration-500 ease-out z-10"
             style={{
-              transform: 'translateX(120px) scale(0.85) rotateY(-15deg)',
+              transform: "translateX(120px) scale(0.9)",
               opacity: 0.7,
             }}
           >
-            <div className="w-36 h-64">
-              <div className="relative shadow-xl shadow-slate-900/50">
-                <MemberCard member={sortedLeads[nextIndex]} />
+            <div className="w-36 h-60">
+              <div className="relative shadow-xl shadow-slate-900/50 rounded-xl overflow-hidden">
+                <div className="h-full">
+                  <CompactMemberCard member={sortedLeads[nextIndex]} />
+                </div>
                 <div className="absolute inset-0 bg-slate-900/40 rounded-xl pointer-events-none" />
               </div>
             </div>
@@ -169,7 +179,7 @@ export default function MobileLeadsCarousel({ leads, loading }: MobileLeadsCarou
           >
             <ChevronLeft size={20} className="text-white" />
           </button>
-          
+
           {/* Dots Indicator */}
           <div className="flex space-x-2">
             {sortedLeads.map((_, index) => (
@@ -187,7 +197,7 @@ export default function MobileLeadsCarousel({ leads, loading }: MobileLeadsCarou
                   index === currentLeadIndex
                     ? "bg-accent scale-125"
                     : "bg-slate-600 hover:bg-slate-400"
-                } ${isTransitioning ? 'opacity-50' : ''}`}
+                } ${isTransitioning ? "opacity-50" : ""}`}
               />
             ))}
           </div>
@@ -215,6 +225,61 @@ export default function MobileLeadsCarousel({ leads, loading }: MobileLeadsCarou
       {isTransitioning && (
         <div className="absolute inset-0 bg-slate-900/10 rounded-xl pointer-events-none z-30" />
       )}
+    </div>
+  );
+}
+
+// Compact Member Card for mobile carousel
+function CompactMemberCard({ member }: { member: Member }) {
+  return (
+    <div className="bg-slate-800/90 backdrop-blur-sm h-full flex flex-col p-4">
+      {/* Avatar */}
+      <div className="flex justify-center mb-3">
+        <img
+          src={member.user.avatarUrl || "/avatar.png"}
+          alt={member.user.username || "User"}
+          className="w-16 h-16 rounded-full border-2 border-slate-600"
+        />
+      </div>
+
+      {/* Name */}
+      <div className="text-center mb-3">
+        <h3 className="font-semibold text-white text-base leading-tight line-clamp-1 mb-1">
+          {member.user.username || "Unknown User"}
+        </h3>
+        {member.fullName && (
+          <p className="text-slate-400 text-sm leading-tight line-clamp-1">
+            {member.fullName}
+          </p>
+        )}
+      </div>
+
+      {/* Role Title */}
+      {member.roleTitle && (
+        <p className="text-primary text-sm text-center font-medium mb-2 line-clamp-1">
+          {member.roleTitle}
+        </p>
+      )}
+
+      {/* Role Information - Always show this section for consistency */}
+      <div className="flex flex-col items-center gap-1.5 mb-3 flex-1 justify-center">
+        {/* Custom Role - Small and compact */}
+        {member.user.customRole && (
+          <span
+            className="text-xs px-2 py-1 rounded-full border font-medium"
+            style={{
+              backgroundColor: `${member.user.customRole.color}15`,
+              color: member.user.customRole.color,
+              borderColor: `${member.user.customRole.color}25`,
+            }}
+          >
+            {member.user.customRole.name}
+          </span>
+        )}
+      </div>
+
+      {/* Empty space filler to ensure consistent height */}
+      <div className="h-2"></div>
     </div>
   );
 }

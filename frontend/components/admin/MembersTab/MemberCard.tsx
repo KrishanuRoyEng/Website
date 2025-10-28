@@ -47,43 +47,58 @@ export default function MemberCard({
         reason,
       });
 
-      // Build detailed success message
+      // Check if we got a valid user response instead of looking for success field
+      if (!response.data || !response.data.id) {
+        throw new Error("Invalid response from server");
+      }
+
+      // The response.data IS the updated user
+      const updatedUser = response.data;
+
+      // Build success message based on what changed
       let successMessage = "";
+      const newCustomRole = updatedUser.customRole?.name;
 
       if (role === "SUSPENDED") {
         successMessage = `User has been suspended${
           reason ? `: ${reason}` : ""
         }`;
-      } else if (role === "MEMBER") {
-        if (user.role === "PENDING") {
-          // Approving a pending member
-          if (customRoleId) {
-            const customRole = response.data?.customRole?.name || "custom role";
-            successMessage = `Member approved and assigned ${customRole} role`;
-          } else {
-            successMessage = "Member approved as regular member";
-          }
-        } else {
-          // Activating a suspended user or changing role
-          if (customRoleId) {
-            const customRole = response.data?.customRole?.name || "custom role";
-            successMessage = `User role updated to ${customRole}`;
-          } else {
-            successMessage = "User activated as regular member";
-          }
-        }
-      } else if (role === "ADMIN") {
+      } else if (user.role === "PENDING" && role === "MEMBER") {
+        successMessage = newCustomRole
+          ? `Member approved and assigned ${newCustomRole} role`
+          : "Member approved as regular member";
+      } else if (user.role === "SUSPENDED" && role === "MEMBER") {
+        successMessage = newCustomRole
+          ? `User activated with ${newCustomRole} role`
+          : "User activated as regular member";
+      } else if (role === "ADMIN" && user.role !== "ADMIN") {
         successMessage = "User promoted to Administrator";
+      } else if (customRoleId !== user.customRoleId) {
+        // Custom role actually changed
+        if (newCustomRole) {
+          successMessage = `Custom role updated to ${newCustomRole}`;
+        } else {
+          successMessage = "Custom role removed";
+        }
+      } else if (role !== user.role) {
+        // Main role changed (but not to/from admin)
+        successMessage = `Role updated to ${role}`;
+      } else {
+        // No actual changes detected
+        successMessage = "Settings updated";
       }
 
       onSuccess(successMessage);
-      onDataChange();
+      onDataChange(); // This should trigger a refresh of the user list
       setShowMobileMenu(false);
+      setShowRoleModal(false);
     } catch (error: any) {
-      onError(error.response?.data?.error || "Failed to update role");
+      console.error("❌ Role update failed:", error);
+      const errorMessage =
+        error.response?.data?.error || error.message || "Failed to update role";
+      onError(errorMessage);
     }
   };
-
   // Permission checks using backend-compatible logic
   const canModify = canManageUser(currentUser, user);
   const canAssign = canAssignRoleBasic(currentUser, user);

@@ -49,8 +49,6 @@ export default function RoleAssignmentModal({
       } else if (responseData && Array.isArray(responseData.roles)) {
         rolesData = responseData.roles;
       }
-
-      console.log("Loaded custom roles:", rolesData);
       setCustomRoles(rolesData);
     } catch (error) {
       console.error("Failed to load custom roles:", error);
@@ -71,8 +69,17 @@ export default function RoleAssignmentModal({
   };
 
   // Permission checks
-  const canAssign = canAssignRole(currentUser, user, selectedRole);
   const isCurrentUser = user.id === currentUser.id;
+  
+  // Allow admins to assign custom roles to themselves
+  const canAssign = isCurrentUser 
+    ? currentUser.role === "ADMIN" && selectedRole === "ADMIN" // Admins can only keep themselves as ADMIN
+    : canAssignRole(currentUser, user, selectedRole);
+
+  // More permissive basic assignment check for self-management
+  const canAssignBasic = isCurrentUser
+    ? currentUser.role === "ADMIN" // Admins can modify their own custom roles
+    : canAssignRoleBasic(currentUser, user);
 
   // Prevent admins from un-adminning themselves
   const isRemovingAdminFromSelf =
@@ -89,7 +96,17 @@ export default function RoleAssignmentModal({
   // Show custom role section when MEMBER role is selected
   const showCustomRoleSection = selectedRole === "MEMBER";
 
-  const canSave = canAssign && !isRemovingAdminFromSelf && !loading;
+  // Special logic for admin self-management
+  const isAdminManagingSelf = isCurrentUser && currentUser.role === "ADMIN";
+  
+  // Save logic that allows admin self-management for custom roles
+  const canSaveCustomRoleAssignment = showCustomRoleSection && 
+    selectedCustomRole !== null &&
+    manageableCustomRoles.some(role => role.id === selectedCustomRole);
+  
+  const canSave = (canAssign || (isAdminManagingSelf && canSaveCustomRoleAssignment)) && 
+    !isRemovingAdminFromSelf && 
+    !loading;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -100,6 +117,7 @@ export default function RoleAssignmentModal({
             <Shield className="w-5 h-5 text-primary" />
             <h3 className="text-lg font-semibold text-white">
               Assign Role to {user.username}
+              {isCurrentUser && " (Yourself)"}
             </h3>
           </div>
           <button
@@ -130,8 +148,25 @@ export default function RoleAssignmentModal({
             </div>
           )}
 
+          {/* Info for admin self-management */}
+          {isAdminManagingSelf && (
+            <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <div className="flex items-start gap-3">
+                <Shield className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <h5 className="font-semibold text-blue-400 mb-1">
+                    Admin Self-Management
+                  </h5>
+                  <p className="text-blue-300 text-sm">
+                    You can assign custom roles to yourself while maintaining ADMIN privileges.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Permission Warning */}
-          {!canAssign && (
+          {!canAssign && !isAdminManagingSelf && (
             <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
               <div className="flex items-start gap-3">
                 <AlertTriangle className="w-5 h-5 text-yellow-400 mt-0.5 flex-shrink-0" />
@@ -154,10 +189,16 @@ export default function RoleAssignmentModal({
             </label>
             <select
               value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value as UserRole)}
-              disabled={!canAssignRoleBasic(currentUser, user)}
+              onChange={(e) => {
+                setSelectedRole(e.target.value as UserRole);
+                // Reset custom role when changing from MEMBER to something else
+                if (e.target.value !== "MEMBER") {
+                  setSelectedCustomRole(null);
+                }
+              }}
+              disabled={!canAssignBasic && !isAdminManagingSelf}
               className={`w-full p-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-primary ${
-                !canAssignRoleBasic(currentUser, user)
+                (!canAssignBasic && !isAdminManagingSelf)
                   ? "opacity-50 cursor-not-allowed"
                   : ""
               }`}
@@ -174,16 +215,22 @@ export default function RoleAssignmentModal({
             )}
             {isRemovingAdminFromSelf && (
               <p className="text-xs text-red-400 mt-1">
-                Cannot remove your own ADMIN role - save blocked
+                Cannot remove your own ADMIN role
+              </p>
+            )}
+            {isAdminManagingSelf && (
+              <p className="text-xs text-blue-400 mt-1">
+                You can assign custom roles while remaining as ADMIN
               </p>
             )}
           </div>
 
-          {/* Custom Role Section - Show when MEMBER role is selected */}
-          {showCustomRoleSection && (
+          {/* Custom Role Section - Show when MEMBER role is selected OR admin is managing themselves */}
+          {(showCustomRoleSection || isAdminManagingSelf) && (
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 Custom Role
+                {isAdminManagingSelf && " (Additional Role)"}
               </label>
               
               {rolesLoading ? (
@@ -205,9 +252,9 @@ export default function RoleAssignmentModal({
                       e.target.value ? Number(e.target.value) : null
                     )
                   }
-                  disabled={isCustomRoleDisabled || !canAssign}
+                  disabled={isCustomRoleDisabled && !isAdminManagingSelf}
                   className={`w-full p-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-primary ${
-                    (isCustomRoleDisabled || !canAssign) ? "opacity-50 cursor-not-allowed" : ""
+                    (isCustomRoleDisabled && !isAdminManagingSelf) ? "opacity-50 cursor-not-allowed" : ""
                   }`}
                 >
                   <option value="">No Custom Role</option>
@@ -228,7 +275,7 @@ export default function RoleAssignmentModal({
           )}
 
           {/* Role Description */}
-          {selectedCustomRole && showCustomRoleSection && (
+          {selectedCustomRole && (showCustomRoleSection || isAdminManagingSelf) && (
             <div className="p-3 bg-slate-700/50 rounded-lg border border-slate-600">
               <h4 className="text-sm font-medium text-slate-300 mb-1">
                 Role Permissions
@@ -238,6 +285,11 @@ export default function RoleAssignmentModal({
                   .find((r) => r.id === selectedCustomRole)
                   ?.permissions?.join(", ") || "No permissions specified"}
               </p>
+              {isAdminManagingSelf && (
+                <p className="text-xs text-blue-400 mt-2">
+                  These permissions will be in addition to your ADMIN privileges
+                </p>
+              )}
             </div>
           )}
         </div>

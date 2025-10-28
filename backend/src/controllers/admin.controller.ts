@@ -117,16 +117,19 @@ export class AdminController {
       return res.status(400).json({ error: "Valid role is required" });
     }
 
-    // Validate custom role assignment
-    if (role === UserRole.MEMBER && customRoleId) {
+    // Validate custom role assignment - allow for both MEMBER and ADMIN
+    if (customRoleId) {
       const customRole = await CustomRoleService.findById(customRoleId);
       if (!customRole) {
         return res.status(400).json({ error: "Invalid custom role" });
       }
-    }
 
-    // Clear custom role if not a MEMBER
-    const finalCustomRoleId = role === UserRole.MEMBER ? customRoleId : null;
+      // Only clear custom role for SUSPENDED and PENDING users
+      if (role === UserRole.SUSPENDED || role === UserRole.PENDING) {
+        const finalCustomRoleId = null;
+      }
+      // For MEMBER and ADMIN, keep the custom role
+    }
 
     // Require reason for suspension
     if (role === UserRole.SUSPENDED && !reason) {
@@ -136,11 +139,12 @@ export class AdminController {
     const updated = await UserService.updateRole(
       userId,
       role,
-      finalCustomRoleId,
+      customRoleId, // Don't force to null for ADMIN
       reason
     );
     return res.json(updated);
   });
+
   static async setUserLeadStatus(req: Request, res: Response) {
     try {
       const userId = parseInt(req.params.userId);
