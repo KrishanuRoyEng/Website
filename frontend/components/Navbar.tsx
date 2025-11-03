@@ -48,7 +48,7 @@ export default function Navbar({ navbarStyle }: NavbarProps) {
           {/* Logo */}
           <Link href="/" className="text-2xl font-bold flex-shrink-0">
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              CodeClub
+              Coder Ride
             </span>
           </Link>
 

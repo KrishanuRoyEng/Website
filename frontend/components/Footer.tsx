@@ -8,7 +8,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div>
             <h3 className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-4">
-              CodeClub
+              Coder Ride
             </h3>
             <p className="text-slate-400">
               A community of passionate developers building amazing projects together.
@@ -79,7 +79,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="border-t border-slate-700 pt-8 text-center text-slate-400">
-          <p>&copy; 2024 CodeClub. All rights reserved.</p>
+          <p>&copy; 2024 Coder Ride. All rights reserved.</p>
         </div>
       </div>
     </footer>
