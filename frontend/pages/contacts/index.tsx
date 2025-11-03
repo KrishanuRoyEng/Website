@@ -308,7 +308,7 @@ export default function ContactPage() {
                     </svg>
                   </summary>
                   <p className="mt-3 px-4 text-slate-400 text-sm">
-                    Yes! CodeClub is completely free for all members. We believe in building an inclusive community for developers.
+                    Yes! Coder Ride is completely free for all members. We believe in building an inclusive community for developers.
                   </p>
                 </details>
               </div>

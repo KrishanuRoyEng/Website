@@ -1,6 +1,6 @@
-# CodeClub Frontend
+# Coder Ride Frontend
 
-A modern Next.js frontend for the CodeClub community platform, featuring member profiles, project showcases, events, and an admin dashboard.
+A modern Next.js frontend for the Coder Ride community platform, featuring member profiles, project showcases, events, and an admin dashboard.
 
 ## Features
 
@@ -32,7 +32,7 @@ A modern Next.js frontend for the CodeClub community platform, featuring member 
 1. Go to GitHub Settings → Developer settings → OAuth Apps
 2. Click "New OAuth App"
 3. Fill in the application details:
-   - **Application name**: CodeClub
+   - **Application name**: Coder Ride
    - **Homepage URL**: `http://localhost:3000` (development) or your production domain
    - **Authorization callback URL**: `http://localhost:3000/api/auth/callback/github`
 4. Copy the Client ID and generate a Client Secret

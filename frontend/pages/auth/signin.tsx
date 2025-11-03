@@ -38,7 +38,7 @@ export default function SignIn() {
         <div className="text-center mb-12">
           <Link href="/" className="text-3xl font-bold inline-block mb-4">
             <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              CodeClub
+              Coder Ride
             </span>
           </Link>
           <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>

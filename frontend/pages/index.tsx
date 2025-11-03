@@ -129,7 +129,7 @@ export default function Home() {
         <div className="mb-6 inline-block animate-bounce-slow">
           <span className="badge-primary flex items-center gap-2">
             <MessageSquarePlus size={16} />
-            Welcome to CodeClub
+            Welcome to Coder Ride
           </span>
         </div>
         <h1 className="section-title mb-4 animate-fade-in">
