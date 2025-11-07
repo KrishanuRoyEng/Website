@@ -204,7 +204,7 @@ export default function DesktopLeadsCarousel({ leads, loading }: DesktopLeadsCar
               className={`absolute left-0 top-0 h-full w-1/3 flex items-center justify-start pl-8 transition-opacity duration-300 ${
                 showLeftButton ? 'opacity-100' : 'opacity-0'
               }`}
-              onMouseEnter={() => setShowLeftButton(true)}
+              onMouseEnter={() => setShowLeftButton(true)                                                                         }
               onMouseLeave={() => setShowLeftButton(false)}
             >
               <button

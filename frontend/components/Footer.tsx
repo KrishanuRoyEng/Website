@@ -38,8 +38,8 @@ export default function Footer() {
             <h4 className="font-semibold text-white mb-4">Resources</h4>
             <ul className="space-y-2 text-slate-400">
               <li>
-                <a href="#" className="hover:text-primary transition-colors">
-                  Documentation
+                <a href="/terms-privacy" className="hover:text-primary transition-colors">
+                  Terms of Service and Privacy Policy
                 </a>
               </li>
               <li>
