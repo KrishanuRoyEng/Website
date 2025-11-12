@@ -71,6 +71,8 @@ export const eventApi = {
   create: (data: any) => apiClient.post("/events", data),
   update: (id: number, data: any) => apiClient.put(`/events/${id}`, data),
   delete: (id: number) => apiClient.delete(`/events/${id}`),
+  search: (query: string, params?: any) =>
+    apiClient.get("/events/search", { params: { q: query, ...params } }),
 };
 
 export const skillApi = {

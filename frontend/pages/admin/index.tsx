@@ -26,7 +26,7 @@ import {
 
 import MembersTab from "@/components/admin/MembersTab/MembersTab";
 import ProjectsTab from "@/components/admin/ProjectsTab/ProjectsTab";
-import EventsTab from "@/components/admin/EventsTab";
+import EventsTab from "@/components/admin/EventsTab/EventsTab";
 import SkillsTab from "@/components/admin/SkillsTab";
 import TagsTab from "@/components/admin/TagsTab";
 import RolesTab from "@/components/admin/RolesTab/RolesTab";

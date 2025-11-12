@@ -116,6 +116,21 @@ export interface Event {
   updatedAt: string;
 }
 
+export interface EventFilters {
+  featuredOnly?: boolean;
+  upcomingOnly?: boolean;
+}
+
+export interface EventFormData {
+  title: string;
+  description: string;
+  eventDate: string;
+  location: string;
+  registrationUrl: string;
+  imageUrl: string;
+  isFeatured: boolean;
+}
+
 export interface ProjectUI extends Omit<Project, "tags"> {
   tags: string[];
 }
